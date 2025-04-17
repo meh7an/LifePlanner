@@ -18,8 +18,7 @@ const taskSchema = new mongoose.Schema({
   },
 
   isCompleted: { type: Boolean, default: false },
-  isNew: { type: Boolean, default: true },
-
+  justCreated: { type: Boolean, default: true },
   userId: { type: String, required: true },
   boardId: { type: String, required: true },
   listId: { type: String },
