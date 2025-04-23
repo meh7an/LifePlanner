@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const calendarEventSchema = new mongoose.Schema({
   eventId: { type: String, required: true, unique: true },
@@ -18,4 +18,5 @@ const calendarEventSchema = new mongoose.Schema({
   taskId: { type: String }, // Optional link to a Task
 });
 
-module.exports = mongoose.model("CalendarEvent", calendarEventSchema);
+const CalendarEvent = mongoose.model("CalendarEvent", taskSchema);
+export default CalendarEvent;

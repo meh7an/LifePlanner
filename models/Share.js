@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const shareSchema = new mongoose.Schema({
   shareId: { type: String, required: true, unique: true },
   ownerId: { type: String, required: true }, // who is sharing
@@ -12,4 +11,5 @@ const shareSchema = new mongoose.Schema({
   sharedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Share", shareSchema);
+const Share = mongoose.model("Share", taskSchema);
+export default Share;

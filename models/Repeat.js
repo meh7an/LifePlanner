@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const repeatSchema = new mongoose.Schema({
   repeatId: { type: String, required: true, unique: true },
@@ -16,4 +16,5 @@ const repeatSchema = new mongoose.Schema({
   isInfinite: { type: Boolean, default: false },
 });
 
-module.exports = mongoose.model("Repeat", repeatSchema);
+const Repeat = mongoose.model("Repeat", taskSchema);
+export default Repeat;

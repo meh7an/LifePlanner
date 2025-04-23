@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const taskStepSchema = new mongoose.Schema({
   stepId: { type: String, required: true, unique: true },
@@ -8,5 +8,5 @@ const taskStepSchema = new mongoose.Schema({
   isCompleted: { type: Boolean, default: false },
   order: { type: Number, default: 0 }, // to keep step sequence
 });
-
-module.exports = mongoose.model("TaskStep", taskStepSchema);
+const TaskStep = mongoose.model("TaskStep", taskSchema);
+export default TaskStep;

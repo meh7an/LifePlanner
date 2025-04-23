@@ -14,4 +14,5 @@ const viewSchema = new mongoose.Schema({
   preferences: { type: mongoose.Schema.Types.Mixed }, // flexible object for storing settings
 });
 
-module.exports = mongoose.model("View", viewSchema);
+const View = mongoose.model("View", taskSchema);
+export default View;

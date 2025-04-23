@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema({
   postId: { type: String, required: true, unique: true },
@@ -17,5 +17,5 @@ postSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
-
-module.exports = mongoose.model("Post", postSchema);
+const Post = mongoose.model("Post", taskSchema);
+export default Post;

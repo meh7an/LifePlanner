@@ -8,4 +8,5 @@ const archiveSchema = new mongoose.Schema({
   category: { type: String }, // e.g., "old project", "past event", etc.
 });
 
-module.exports = mongoose.model("Archive", archiveSchema);
+const Archive = mongoose.model("Archive", taskSchema);
+export default Archive;

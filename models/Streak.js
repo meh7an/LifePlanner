@@ -10,5 +10,5 @@ const streakSchema = new mongoose.Schema({
 
   longestStreak: { type: Number, default: 0 },
 });
-
-module.exports = mongoose.model("Streak", streakSchema);
+const Streak = mongoose.model("Streak", taskSchema);
+export default Streak;

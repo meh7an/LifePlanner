@@ -14,4 +14,5 @@ const boardSchema = new mongoose.Schema({
   ownerId: { type: String, required: true },
 });
 
-module.exports = mongoose.model("Board", boardSchema);
+const Board = mongoose.model("Board", taskSchema);
+export default Board;

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const noteSchema = new mongoose.Schema({
   noteId: { type: String, required: true, unique: true },
@@ -14,5 +14,5 @@ noteSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
-
-module.exports = mongoose.model("Note", noteSchema);
+const Note = mongoose.model("Note", taskSchema);
+export default Note;
