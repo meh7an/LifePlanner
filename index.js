@@ -1,24 +1,23 @@
-const connectToDatabase = require("./db");
+import connectToDatabase from "./db.js";
 
-// Load models
-require("./models/User");
-require("./models/Board");
-require("./models/Task");
-require("./models/TaskStep");
-require("./models/List");
-require("./models/Calendar");
-require("./models/CalendarEvent");
-require("./models/Note");
-require("./models/Post");
-require("./models/Memory");
-require("./models/Archive");
-require("./models/Repeat");
-require("./models/View");
-require("./models/Share");
-require("./models/Streak");
-require("./models/FocusSession");
+import "./models/User.js";
+import "./models/Board.js";
+import "./models/Task.js";
+import "./models/TaskStep.js";
+import "./models/List.js";
+import "./models/Calendar.js";
+import "./models/CalendarEvent.js";
+import "./models/Note.js";
+import "./models/Post.js";
+import "./models/Memory.js";
+import "./models/Archive.js";
+import "./models/Repeat.js";
+import "./models/View.js";
+import "./models/Share.js";
+import "./models/Streak.js";
+import "./models/FocusSession.js";
 
 connectToDatabase().then(() => {
-  console.log("📦 MongoDB connection test successful and User schema loaded");
+  console.log("📦 MongoDB connection test successful and all schemas loaded");
   process.exit();
 });
