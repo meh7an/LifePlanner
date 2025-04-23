@@ -1,5 +1,4 @@
-// models/User.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
@@ -15,8 +14,5 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date, default: Date.now },
 });
 
-// Create index on email and userId
-// userSchema.index({ email: 1 }, { unique: true });
-// userSchema.index({ userId: 1 }, { unique: true });
-
-module.exports = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+export default User;
