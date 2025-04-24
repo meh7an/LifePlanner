@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const archiveSchema = new mongoose.Schema({
   archiveId: { type: String, required: true, unique: true },

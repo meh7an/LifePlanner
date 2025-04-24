@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const focusSessionSchema = new mongoose.Schema({
   sessionId: { type: String, required: true, unique: true },

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const shareSchema = new mongoose.Schema({
   shareId: { type: String, required: true, unique: true },
   ownerId: { type: String, required: true }, // who is sharing

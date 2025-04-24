@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const boardSchema = new mongoose.Schema({
   boardId: { type: String, required: true, unique: true },

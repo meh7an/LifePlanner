@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const streakSchema = new mongoose.Schema({
   streakId: { type: String, required: true, unique: true },
