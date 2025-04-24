@@ -17,6 +17,12 @@ import "./models/Share.js";
 import "./models/Streak.js";
 import "./models/FocusSession.js";
 
+import signupRoute from "./routes/auth/signup.js";
+import loginRoute from "./routes/auth/login.js";
+
+app.use("/api/auth", signupRoute);
+app.use("/api/auth", loginRoute);
+
 connectToDatabase().then(() => {
   console.log("📦 MongoDB connection test successful and all schemas loaded");
   process.exit();
