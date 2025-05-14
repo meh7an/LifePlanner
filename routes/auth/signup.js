@@ -9,7 +9,6 @@ router.post("/signup", async (req, res) => {
     // Calls the real logic from your authController.js
     // registerUser takes req.body (email, password, username, userId)
     // await waits for it to finish (because it connects to MongoDB)
-
     const result = await registerUser(req.body);
     res.status(201).json(result);
   } catch (error) {

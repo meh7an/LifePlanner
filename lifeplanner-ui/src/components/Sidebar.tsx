@@ -1,54 +1,38 @@
 "use client";
 
-import Link from "next/link";
+import { Home, List, Settings, User } from "lucide-react"; // or your preferred icons
 
-export default function Sidebar() {
+export default function Sidebar({
+  onSelect,
+}: {
+  onSelect: (label: string) => void;
+}) {
+  const navItems = [
+    { label: "Tasks", icon: <List className="w-5 h-5" /> },
+    { label: "Profile", icon: <User className="w-5 h-5" /> },
+    { label: "Settings", icon: <Settings className="w-5 h-5" /> },
+  ];
+
   return (
-    <aside className="w-64 p-4 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 h-full">
-      <h2 className="text-xl font-semibold mb-6">Life Planner</h2>
-      <nav className="space-y-4 text-sm">
-        <Link
-          href="/dashboard"
-          className="block hover:text-blue-500 transition"
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/tasks"
-          className="block hover:text-blue-500 transition"
-        >
-          Tasks
-        </Link>
-        <Link
-          href="/dashboard/calendar"
-          className="block hover:text-blue-500 transition"
-        >
-          Calendar
-        </Link>
-        <Link
-          href="/dashboard/focus"
-          className="block hover:text-blue-500 transition"
-        >
-          Focus Sessions
-        </Link>
-        <Link
-          href="/dashboard/posts"
-          className="block hover:text-blue-500 transition"
-        >
-          Posts
-        </Link>
-        <Link
-          href="/dashboard/notes"
-          className="block hover:text-blue-500 transition"
-        >
-          Notes
-        </Link>
-        <Link
-          href="/dashboard/settings"
-          className="block hover:text-blue-500 transition"
-        >
-          Settings
-        </Link>
+    <aside className="w-16 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-4 space-y-6">
+      {/* Logo */}
+      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-xs font-bold">
+        日
+      </div>
+
+      {/* Navigation Icons */}
+      <nav className="flex flex-col gap-6 mt-4">
+        {navItems.map((item) => (
+          <button
+            key={item.label}
+            onClick={() => onSelect(item.label)}
+            className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            title={item.label}
+          >
+            {item.icon}
+            <span className="sr-only">{item.label}</span>
+          </button>
+        ))}
       </nav>
     </aside>
   );

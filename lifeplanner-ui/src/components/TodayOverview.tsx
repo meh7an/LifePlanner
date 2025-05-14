@@ -16,8 +16,6 @@ function getWeekNumber(date: Date): number {
 
 export default function TodayOverview() {
   const [now, setNow] = useState(new Date());
-
-  // Update time every minute for accuracy
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(new Date());

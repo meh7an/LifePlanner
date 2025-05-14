@@ -9,16 +9,12 @@ export const verifyToken = (req, res, next) => {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "No token provided" });
   }
-
   const token = authHeader.split(" ")[1];
-
   try {
     // 2. Verify the token using your JWT_SECRET
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     // 3. Attach the decoded user info to the request
     req.user = decoded;
-
     // 4. Allow the request to move forward
     next();
   } catch (err) {
