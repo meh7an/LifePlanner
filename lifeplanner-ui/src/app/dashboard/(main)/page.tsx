@@ -92,7 +92,6 @@ export default function DashboardPage() {
                     : view === "week"
                     ? "Week"
                     : "Today View"}{" "}
-                  ▼
                 </button>
 
                 {showDropdown && (

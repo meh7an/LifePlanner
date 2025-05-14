@@ -1,4 +1,5 @@
 "use client";
+import TasksPanel from "./panels/TasksPanel";
 
 export default function RightPanel({
   content,
@@ -22,7 +23,8 @@ export default function RightPanel({
       </div>
 
       <div className="text-sm text-gray-700 dark:text-gray-300">
-        {content === "Tasks" && <p>Here are your tasks.</p>}
+        {content === "Tasks" && <TasksPanel />}
+
         {content === "Settings" && (
           <p>Configure your planner preferences here.</p>
         )}
