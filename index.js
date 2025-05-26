@@ -1,4 +1,5 @@
 import connectToDatabase from "./db.js";
+import taskRoutes from './routes/task.js';
 
 import "./models/User.js";
 import "./models/Board.js";
@@ -22,6 +23,7 @@ import loginRoute from "./routes/auth/login.js";
 
 app.use("/api/auth", signupRoute);
 app.use("/api/auth", loginRoute);
+app.use('/api/tasks', taskRoutes);
 
 connectToDatabase().then(() => {
   console.log("📦 MongoDB connection test successful and all schemas loaded");

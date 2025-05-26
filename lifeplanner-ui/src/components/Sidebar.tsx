@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, List, Settings, User } from "lucide-react"; // or your preferred icons
+import { List, User, Settings, Timer } from "lucide-react";
 
 export default function Sidebar({
   onSelect,
@@ -9,6 +9,7 @@ export default function Sidebar({
 }) {
   const navItems = [
     { label: "Tasks", icon: <List className="w-5 h-5" /> },
+    { label: "Focus", icon: <Timer className="w-5 h-5" /> },
     { label: "Profile", icon: <User className="w-5 h-5" /> },
     { label: "Settings", icon: <Settings className="w-5 h-5" /> },
   ];
