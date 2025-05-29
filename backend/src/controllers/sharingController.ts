@@ -8,6 +8,7 @@ import {
     ApiResponse,
     PaginatedResponse
 } from '../types';
+import { notifyShareReceived } from './notificationsController';
 
 // Share a resource (board, task, or calendar) with another user
 export const shareResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -129,6 +130,9 @@ export const shareResource = async (req: AuthenticatedRequest, res: Response): P
                 }
             }
         });
+
+        // 🤝 Notify the user about the shared resource
+        await notifyShareReceived(sharedWithUserId, resourceType, resourceName, req.user?.username || 'Someone');
 
         res.status(201).json({
             message: `${resourceType} "${resourceName}" shared successfully with ${targetUser.username}! 🤝`,

@@ -64,6 +64,7 @@ import notesRoutes from './routes/notesRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import sharingRoutes from './routes/sharingRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import notificationsRoutes from './routes/notificationsRoutes';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -84,6 +85,7 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/share', sharingRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Welcome endpoint
 app.get('/', (req, res) => {
@@ -112,7 +114,7 @@ app.use((err: ApiError, req: Request, res: Response, next: NextFunction): void =
     if ((err as any).name === 'ValidationError') {
         res.status(400).json({
             error: 'Validation failed',
-            details: (err as any).details
+            details: err.details
         });
         return;
     }

@@ -2,10 +2,16 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import {
     AuthenticatedRequest,
+    TaskWithDetails,
+    TaskFilters,
     TaskPriority,
     TaskStatus,
+    PaginatedResponse,
+    ApiResponse,
     WhereClause,
+    OrderByClause
 } from '../types';
+import { celebrateTaskCompletion } from './notificationsController';
 
 // Get all tasks for authenticated user
 export const getTasks = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -357,6 +363,9 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
 
             if (completed) {
                 updateData.status = 'done';
+
+                // 🎉 Celebrate task completion
+                await celebrateTaskCompletion(userId, existingTask.taskName, id);
 
                 // Update user's daily task streak
                 const today = new Date();

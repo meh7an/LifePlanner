@@ -11,6 +11,7 @@ import {
     PaginatedResponse,
     ApiResponse
 } from '../types';
+import { celebrateFocusSession, celebrateStreakMilestone } from './notificationsController';
 
 // Get all focus sessions for authenticated user
 export const getFocusSessions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -321,6 +322,10 @@ export const endFocusSession = async (req: AuthenticatedRequest, res: Response):
 
         // Update focus session streak if completed
         if (completed && durationMinutes >= 15) { // Minimum 15 minutes for streak
+            // 🎉 Celebrate focus session completion
+            const taskName = updatedSession.task?.taskName;
+            await celebrateFocusSession(userId, durationMinutes, taskName);
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -341,14 +346,18 @@ export const endFocusSession = async (req: AuthenticatedRequest, res: Response):
                     // Same day, no change needed
                 } else if (daysDiff === 1) {
                     // Next day, increment streak
+                    const newCount = streak.currentCount + 1;
                     await prisma.streak.update({
                         where: { id: streak.id },
                         data: {
-                            currentCount: streak.currentCount + 1,
+                            currentCount: newCount,
                             lastUpdate: new Date(),
-                            longestStreak: Math.max(streak.longestStreak, streak.currentCount + 1)
+                            longestStreak: Math.max(streak.longestStreak, newCount)
                         }
                     });
+
+                    // 🔥 Celebrate streak milestones
+                    await celebrateStreakMilestone(userId, 'focus_sessions', newCount);
                 } else {
                     // Streak broken, reset to 1
                     await prisma.streak.update({
@@ -543,7 +552,7 @@ export const getFocusStats = async (req: AuthenticatedRequest, res: Response): P
         // Group by date
         const sessionsByDate: Record<string, { count: number; totalMinutes: number }> = {};
 
-        sessionsOverTime.forEach((session: { startTime: Date; durationMinutes: number | null }) => {
+        sessionsOverTime.forEach((session: any) => {
             const dateKey = session.startTime.toISOString().split('T')[0];
             if (!sessionsByDate[dateKey]) {
                 sessionsByDate[dateKey] = { count: 0, totalMinutes: 0 };
@@ -554,7 +563,7 @@ export const getFocusStats = async (req: AuthenticatedRequest, res: Response): P
 
         // Get most productive hours
         const hourlyData: Record<number, number> = {};
-        sessionsOverTime.forEach((session: { startTime: Date; durationMinutes: number | null }) => {
+        sessionsOverTime.forEach((session: any) => {
             const hour = session.startTime.getHours();
             hourlyData[hour] = (hourlyData[hour] || 0) + (session.durationMinutes || 0);
         });
