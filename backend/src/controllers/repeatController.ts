@@ -7,6 +7,7 @@ import {
     PaginatedResponse,
     WhereClause
 } from '../types';
+import { repeatScheduler } from '../services/repeatScheduler';
 
 // Get all repeats for a task
 export const getTaskRepeats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -574,84 +575,15 @@ export const processRepeats = async (req: AuthenticatedRequest, res: Response): 
             return;
         }
 
-        // Get active repeats for user
-        const activeRepeats = await prisma.repeat.findMany({
-            where: {
-                task: {
-                    userId
-                },
-                OR: [
-                    { infiniteRepeat: true },
-                    { endDate: { gte: new Date() } }
-                ]
-            },
-            include: {
-                task: {
-                    select: {
-                        id: true,
-                        taskName: true,
-                        description: true,
-                        priority: true,
-                        boardId: true,
-                        listId: true
-                    }
-                }
-            }
-        });
-
-        const processedRepeats: Array<{
-            repeatId: string;
-            taskName: string;
-            nextOccurrence: Date;
-            created: boolean;
-        }> = [];
-
-        const now = new Date();
-
-        for (const repeat of activeRepeats) {
-            const nextOccurrence = calculateNextOccurrence(repeat);
-
-            if (nextOccurrence && nextOccurrence <= now) {
-                // Create new task instance
-                try {
-                    const newTask = await prisma.task.create({
-                        data: {
-                            taskName: `${repeat.task.taskName} (${nextOccurrence.toLocaleDateString()})`,
-                            description: repeat.task.description,
-                            priority: repeat.task.priority,
-                            dueTime: nextOccurrence,
-                            userId,
-                            boardId: repeat.task.boardId,
-                            listId: repeat.task.listId,
-                            newTask: true
-                        }
-                    });
-
-                    processedRepeats.push({
-                        repeatId: repeat.id,
-                        taskName: newTask.taskName,
-                        nextOccurrence,
-                        created: true
-                    });
-                } catch (error) {
-                    console.error(`Failed to create repeat task for ${repeat.task.taskName}:`, error);
-                    processedRepeats.push({
-                        repeatId: repeat.id,
-                        taskName: repeat.task.taskName,
-                        nextOccurrence,
-                        created: false
-                    });
-                }
-            }
-        }
+        // Use the scheduler service to process repeats for this user
+        const result = await repeatScheduler.processRepeatsForUser(userId);
 
         res.json({
-            message: `Processed ${processedRepeats.length} repeat occurrences! 🔄`,
-            processedRepeats,
+            message: `Processed ${result.processedCount} repeat configurations! 🔄`,
             summary: {
-                totalProcessed: processedRepeats.length,
-                successful: processedRepeats.filter(r => r.created).length,
-                failed: processedRepeats.filter(r => !r.created).length
+                totalProcessed: result.processedCount,
+                tasksCreated: result.createdCount,
+                createdTasks: result.createdTasks
             }
         });
 
