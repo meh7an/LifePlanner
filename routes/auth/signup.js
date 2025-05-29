@@ -4,6 +4,7 @@ import { registerUser } from "../../controllers/authController.js";
 // Instead of writing all routes in one big file, we split them into modular routers.
 // const router = express.Router();
 
+const router = express.Router();
 router.post("/signup", async (req, res) => {
   try {
     // Calls the real logic from your authController.js

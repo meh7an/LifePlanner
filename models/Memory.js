@@ -7,5 +7,5 @@ const memorySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   tags: [{ type: String }], // optional tags like "Graduation", "Milestone"
 });
-const Memory = mongoose.model("Memory", taskSchema);
+const Memory = mongoose.model("Memory", memorySchema);
 export default Memory;

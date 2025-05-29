@@ -11,5 +11,5 @@ const focusSessionSchema = new mongoose.Schema({
 
   isCompleted: { type: Boolean, default: false },
 });
-const FocusSession = mongoose.model("FocusSession", taskSchema);
+const FocusSession = mongoose.model("FocusSession", focusSessionSchema);
 export default FocusSession;

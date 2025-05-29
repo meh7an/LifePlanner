@@ -7,5 +7,5 @@ const listSchema = new mongoose.Schema({
   name: { type: String, required: true },
   order: { type: Number, default: 0 }, // to define position inside board
 });
-const List = mongoose.model("List", taskSchema);
+const List = mongoose.model("List", listSchema);
 export default List;

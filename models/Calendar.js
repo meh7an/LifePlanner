@@ -9,5 +9,5 @@ const calendarSchema = new mongoose.Schema({
   endDate: { type: Date },
 });
 
-const Calendar = mongoose.model("Calendar", taskSchema);
+const Calendar = mongoose.model("Calendar", calendarSchema);
 export default Calendar;

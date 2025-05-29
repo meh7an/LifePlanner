@@ -8,5 +8,5 @@ const taskStepSchema = new mongoose.Schema({
   isCompleted: { type: Boolean, default: false },
   order: { type: Number, default: 0 }, // to keep step sequence
 });
-const TaskStep = mongoose.model("TaskStep", taskSchema);
+const TaskStep = mongoose.model("TaskStep", taskStepSchema);
 export default TaskStep;

@@ -14,5 +14,5 @@ noteSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
-const Note = mongoose.model("Note", taskSchema);
+const Note = mongoose.model("Note", noteSchema);
 export default Note;

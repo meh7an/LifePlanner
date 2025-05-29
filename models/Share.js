@@ -12,5 +12,5 @@ const shareSchema = new mongoose.Schema({
   sharedAt: { type: Date, default: Date.now },
 });
 
-const Share = mongoose.model("Share", taskSchema);
+const Share = mongoose.model("Share", shareSchema);
 export default Share;

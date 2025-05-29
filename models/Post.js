@@ -17,5 +17,5 @@ postSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
-const Post = mongoose.model("Post", taskSchema);
+const Post = mongoose.model("Post", postSchema);
 export default Post;

@@ -16,5 +16,5 @@ const repeatSchema = new mongoose.Schema({
   isInfinite: { type: Boolean, default: false },
 });
 
-const Repeat = mongoose.model("Repeat", taskSchema);
+const Repeat = mongoose.model("Repeat", repeatSchema);
 export default Repeat;

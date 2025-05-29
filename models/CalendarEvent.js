@@ -18,5 +18,5 @@ const calendarEventSchema = new mongoose.Schema({
   taskId: { type: String }, // Optional link to a Task
 });
 
-const CalendarEvent = mongoose.model("CalendarEvent", taskSchema);
+const CalendarEvent = mongoose.model("CalendarEvent", calendarEventSchema);
 export default CalendarEvent;
