@@ -1,0 +1,265 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  username       String   @unique
+  email          String   @unique
+  passwordHash   String
+  profilePicture String?
+  status         String   @default("active")
+  lastLogin      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  boards         Board[]
+  tasks          Task[]
+  posts          Post[]
+  calendars      Calendar[]
+  views          View[]
+  streaks        Streak[]
+  focusSessions  FocusSession[]
+  ownedShares    Share[]   @relation("ShareOwner")
+  receivedShares Share[]   @relation("ShareReceiver")
+
+  @@map("users")
+}
+
+model Board {
+  id         String   @id @default(cuid())
+  name       String
+  type       String   // work, personal, project, etc.
+  createdAt  DateTime @default(now())
+  isArchived Boolean  @default(false)
+  userId     String
+
+  // Relations
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lists List[]
+  tasks Task[]
+
+  @@map("boards")
+}
+
+model List {
+  id         String @id @default(cuid())
+  name       String
+  orderIndex Int
+  boardId    String
+
+  // Relations
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("lists")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  taskName    String
+  description String?
+  dueTime     DateTime?
+  completed   Boolean  @default(false)
+  newTask     Boolean  @default(true)
+  priority    String   @default("medium") // low, medium, high
+  status      String   @default("todo") // todo, in_progress, done
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  boardId     String
+  listId      String?
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board         Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  list          List?          @relation(fields: [listId], references: [id], onDelete: SetNull)
+  steps         TaskStep[]
+  events        CalendarEvent[]
+  repeat        Repeat?
+  focusSessions FocusSession[]
+  notes         Note[]
+
+  @@map("tasks")
+}
+
+model TaskStep {
+  id          String  @id @default(cuid())
+  description String
+  completed   Boolean @default(false)
+  orderIndex  Int
+  taskId      String
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_steps")
+}
+
+model Post {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  privacySetting String   @default("private") // public, private
+  createdAt      DateTime @default(now())
+  modifiedAt     DateTime @updatedAt
+  userId         String
+
+  // Relations
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory  Memory?
+  archive Archive?
+
+  @@map("posts")
+}
+
+model Calendar {
+  id        String    @id @default(cuid())
+  name      String
+  startDate DateTime?
+  endDate   DateTime?
+  userId    String
+
+  // Relations
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events CalendarEvent[]
+
+  @@map("calendars")
+}
+
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+  eventType String   // meeting, reminder, task, etc.
+  alarm     Boolean  @default(false)
+  reminder  Int?     // minutes before event
+  calendarId String
+  taskId    String?
+
+  // Relations
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  task     Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@map("calendar_events")
+}
+
+model Memory {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  tags      String[] // Array of tags
+  postId    String   @unique
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("memories")
+}
+
+model Archive {
+  id          String   @id @default(cuid())
+  archiveDate DateTime @default(now())
+  category    String
+  postId      String   @unique
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("archives")
+}
+
+model Repeat {
+  id             String    @id @default(cuid())
+  periodType     String    // daily, weekly, monthly, yearly
+  periodValue    Int       @default(1) // every X days/weeks/months
+  repeatDays     String[]  // for weekly: ["monday", "wednesday"]
+  endDate        DateTime?
+  infiniteRepeat Boolean   @default(false)
+  taskId         String    @unique
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("repeats")
+}
+
+model View {
+  id              String @id @default(cuid())
+  viewType        String // days, weeks, duration, focus_mode, etc.
+  defaultStatus   Boolean @default(false)
+  viewPreferences Json?  // Store view settings as JSON
+  userId          String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("views")
+}
+
+model Share {
+  id                String   @id @default(cuid())
+  resourceType      String   // task, board, calendar
+  resourceId        String
+  permissionLevel   String   // read, write, admin
+  sharingTimestamp  DateTime @default(now())
+  ownerUserId       String
+  sharedWithUserId  String
+
+  // Relations
+  owner      User @relation("ShareOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  sharedWith User @relation("ShareReceiver", fields: [sharedWithUserId], references: [id], onDelete: Cascade)
+
+  @@map("shares")
+}
+
+model Streak {
+  id            String   @id @default(cuid())
+  currentCount  Int      @default(0)
+  lastUpdate    DateTime @default(now())
+  streakType    String   // daily_tasks, focus_sessions, etc.
+  longestStreak Int      @default(0)
+  userId        String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+model FocusSession {
+  id              String   @id @default(cuid())
+  startTime       DateTime
+  endTime         DateTime?
+  durationMinutes Int?
+  completed       Boolean  @default(false)
+  userId          String
+  taskId          String?
+
+  // Relations
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@map("focus_sessions")
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+  taskId     String
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
