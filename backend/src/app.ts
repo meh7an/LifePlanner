@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import { ApiError } from './types';
 
 // Load environment variables
 dotenv.config();
@@ -58,6 +59,10 @@ import authRoutes from './routes/authRoutes';
 import boardRoutes from './routes/boardRoutes';
 import taskRoutes from './routes/taskRoutes';
 import calendarRoutes from './routes/calendarRoutes';
+import focusRoutes from './routes/focusRoutes';
+import notesRoutes from './routes/notesRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
+import sharingRoutes from './routes/sharingRoutes';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -73,7 +78,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/calendars', calendarRoutes);
-// app.use('/api/focus', focusRoutes);
+app.use('/api/focus', focusRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/share', sharingRoutes);
 
 // Welcome endpoint
 app.get('/', (req, res) => {
@@ -86,11 +94,11 @@ app.get('/', (req, res) => {
 });
 
 // Global error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
+app.use((err: ApiError, req: Request, res: Response, next: NextFunction): void => {
     console.error('Error:', err);
 
     // Prisma error handling
-    if (err.code === 'P2002') {
+    if ('code' in err && err.code === 'P2002') {
         res.status(400).json({
             error: 'Duplicate entry',
             message: 'A record with this information already exists'
@@ -99,16 +107,16 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     }
 
     // Validation errors
-    if (err.name === 'ValidationError') {
+    if ((err as any).name === 'ValidationError') {
         res.status(400).json({
             error: 'Validation failed',
-            details: err.details
+            details: (err as any).details
         });
         return;
     }
 
     // JWT errors
-    if (err.name === 'JsonWebTokenError') {
+    if ((err as any).name === 'JsonWebTokenError') {
         res.status(401).json({
             error: 'Invalid token',
             message: 'Please log in again'
@@ -117,7 +125,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     }
 
     // Default error response
-    res.status(err.status || 500).json({
+    res.status((err as any).status || 500).json({
         error: err.message || 'Internal server error',
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });

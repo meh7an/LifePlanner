@@ -1,8 +1,14 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../app';
+import {
+    AuthenticatedRequest,
+    TaskPriority,
+    TaskStatus,
+    WhereClause,
+} from '../types';
 
 // Get all tasks for authenticated user
-export const getTasks = async (req: Request, res: Response): Promise<void> => {
+export const getTasks = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const {
@@ -16,7 +22,18 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
             limit = '20',
             sortBy = 'createdAt',
             sortOrder = 'desc'
-        } = req.query;
+        } = req.query as {
+            boardId?: string;
+            listId?: string;
+            completed?: string;
+            priority?: TaskPriority;
+            status?: TaskStatus;
+            dueDate?: string;
+            page?: string;
+            limit?: string;
+            sortBy?: string;
+            sortOrder?: 'asc' | 'desc';
+        };
 
         if (!userId) {
             res.status(401).json({
@@ -27,7 +44,7 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
         }
 
         // Build where clause
-        const where: any = { userId };
+        const where: WhereClause = { userId };
 
         if (boardId) where.boardId = boardId;
         if (listId) where.listId = listId;
@@ -73,7 +90,7 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
                         select: { steps: true, notes: true }
                     }
                 },
-                orderBy: { [sortField as string]: sortDirection },
+                orderBy: { [sortField]: sortDirection },
                 skip,
                 take: limitNum
             }),
@@ -104,7 +121,7 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Get single task by ID
-export const getTask = async (req: Request, res: Response): Promise<void> => {
+export const getTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -173,7 +190,7 @@ export const getTask = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Create new task
-export const createTask = async (req: Request, res: Response): Promise<void> => {
+export const createTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { taskName, description, dueTime, priority, boardId, listId } = req.body;
@@ -258,11 +275,19 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Update task
-export const updateTask = async (req: Request, res: Response): Promise<void> => {
+export const updateTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
-        const { taskName, description, dueTime, completed, priority, status, listId } = req.body;
+        const { taskName, description, dueTime, completed, priority, status, listId } = req.body as {
+            taskName?: string;
+            description?: string;
+            dueTime?: Date;
+            completed?: boolean;
+            priority?: TaskPriority;
+            status?: TaskStatus;
+            listId?: string;
+        };
 
         if (!userId) {
             res.status(401).json({
@@ -307,7 +332,16 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
         }
 
         // Handle task completion logic
-        let updateData: any = {
+        let updateData: Partial<{
+            taskName: string;
+            description: string;
+            dueTime: Date;
+            completed: boolean;
+            priority: TaskPriority;
+            status: TaskStatus;
+            listId: string;
+            newTask: boolean;
+        }> = {
             ...(taskName && { taskName }),
             ...(description !== undefined && { description }),
             ...(dueTime !== undefined && { dueTime }),
@@ -365,7 +399,7 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
                     }
                 }
             } else if (status !== 'done') {
-                updateData.status = existingTask.status === 'done' ? 'todo' : existingTask.status;
+                updateData.status = existingTask.status === 'done' ? 'todo' : existingTask.status as TaskStatus;
             }
         }
 
@@ -403,7 +437,7 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Delete task
-export const deleteTask = async (req: Request, res: Response): Promise<void> => {
+export const deleteTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -450,7 +484,7 @@ export const deleteTask = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Add step to task
-export const addTaskStep = async (req: Request, res: Response): Promise<void> => {
+export const addTaskStep = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { taskId } = req.params;
@@ -513,7 +547,7 @@ export const addTaskStep = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Update task step
-export const updateTaskStep = async (req: Request, res: Response): Promise<void> => {
+export const updateTaskStep = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -569,7 +603,7 @@ export const updateTaskStep = async (req: Request, res: Response): Promise<void>
 };
 
 // Delete task step
-export const deleteTaskStep = async (req: Request, res: Response): Promise<void> => {
+export const deleteTaskStep = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -618,7 +652,7 @@ export const deleteTaskStep = async (req: Request, res: Response): Promise<void>
 };
 
 // Get today's tasks
-export const getTodayTasks = async (req: Request, res: Response): Promise<void> => {
+export const getTodayTasks = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
 

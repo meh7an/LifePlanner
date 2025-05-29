@@ -1,8 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../app';
+import {
+    AuthenticatedRequest,
+} from '../types';
 
 // Get all boards for authenticated user
-export const getBoards = async (req: Request, res: Response): Promise<void> => {
+export const getBoards = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { includeArchived = 'false' } = req.query;
@@ -55,7 +58,7 @@ export const getBoards = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Get single board by ID
-export const getBoard = async (req: Request, res: Response): Promise<void> => {
+export const getBoard = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -122,7 +125,7 @@ export const getBoard = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Create new board
-export const createBoard = async (req: Request, res: Response): Promise<void> => {
+export const createBoard = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { name, type } = req.body;
@@ -166,7 +169,7 @@ export const createBoard = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Update board
-export const updateBoard = async (req: Request, res: Response): Promise<void> => {
+export const updateBoard = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -228,7 +231,7 @@ export const updateBoard = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Delete board (soft delete by archiving)
-export const deleteBoard = async (req: Request, res: Response): Promise<void> => {
+export const deleteBoard = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -290,7 +293,7 @@ export const deleteBoard = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Create list in board
-export const createList = async (req: Request, res: Response): Promise<void> => {
+export const createList = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { boardId } = req.params;
@@ -358,7 +361,7 @@ export const createList = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Update list
-export const updateList = async (req: Request, res: Response): Promise<void> => {
+export const updateList = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -418,7 +421,7 @@ export const updateList = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Delete list
-export const deleteList = async (req: Request, res: Response): Promise<void> => {
+export const deleteList = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -481,7 +484,7 @@ export const deleteList = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Get board statistics
-export const getBoardStats = async (req: Request, res: Response): Promise<void> => {
+export const getBoardStats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;

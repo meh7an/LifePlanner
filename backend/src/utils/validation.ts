@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { Request, Response, NextFunction } from 'express';
+import { ValidationError } from '../types';
 
 // User validation schemas
 export const registerSchema = z.object({
@@ -282,7 +284,7 @@ export const paginationSchema = z.object({
 
 // Validation middleware
 export const validate = (schema: z.ZodSchema) => {
-    return (req: any, res: any, next: any) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
         try {
             const result = schema.parse({
                 ...req.body,
@@ -300,12 +302,14 @@ export const validate = (schema: z.ZodSchema) => {
             next();
         } catch (error) {
             if (error instanceof z.ZodError) {
+                const validationErrors: ValidationError[] = error.errors.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message
+                }));
+
                 res.status(400).json({
                     error: 'Validation failed',
-                    details: error.errors.map(err => ({
-                        field: err.path.join('.'),
-                        message: err.message
-                    }))
+                    details: validationErrors
                 });
                 return;
             }

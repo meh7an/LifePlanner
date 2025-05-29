@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../app';
+import { JWTPayload, AuthenticatedRequest } from '../types';
 
 // Extend Request interface to include user
 declare global {
@@ -15,49 +16,25 @@ declare global {
     }
 }
 
-export interface JWTPayload {
-    userId: string;
-    email: string;
-    username: string;
-}
-
 // Generate JWT token
 export const generateToken = (payload: JWTPayload): string => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        throw new Error('JWT_SECRET is not defined in environment variables');
-    }
-
     const options: jwt.SignOptions = {
         expiresIn: parseInt(process.env.JWT_EXPIRES_IN || '604800', 10),
     };
-
-    return jwt.sign(payload as object, secret, options);
+    return jwt.sign(payload, process.env.JWT_SECRET!, options);
 };
 
 // Generate refresh token
 export const generateRefreshToken = (payload: JWTPayload): string => {
-    const secret = process.env.JWT_REFRESH_SECRET;
-    if (!secret) {
-        throw new Error('JWT_REFRESH_SECRET is not defined in environment variables');
-    }
-
     const options: jwt.SignOptions = {
-        expiresIn: parseInt(process.env.JWT_REFRESH_EXPIRES_IN || '2592000', 10),
+        expiresIn: parseInt(process.env.JWT_REFRESH_EXPIRES_IN || '2592000', 10), // 30 days
     };
-
-    return jwt.sign(payload as object, secret, options);
+    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, options);
 };
 
 // Verify JWT token
 export const verifyToken = (token: string): JWTPayload => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        throw new Error('JWT_SECRET is not defined in environment variables');
-    }
-
-    const decoded = jwt.verify(token, secret);
-    return decoded as JWTPayload;
+    return jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
 };
 
 // Authentication middleware
@@ -153,7 +130,7 @@ export const authenticate = async (
 
 // Optional authentication (for public endpoints that can work with or without auth)
 export const optionalAuth = async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
@@ -204,7 +181,7 @@ export const optionalAuth = async (
 
 // Admin middleware (for future admin features)
 export const requireAdmin = async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
 ): Promise<void> => {

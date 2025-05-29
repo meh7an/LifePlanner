@@ -1,12 +1,17 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../app';
 import { generateToken, generateRefreshToken, verifyToken } from '../middleware/auth';
+import {
+    AuthenticatedRequest,
+    RegisterRequest,
+    LoginRequest
+} from '../types';
 
 // Register new user
-export const register = async (req: Request, res: Response): Promise<void> => {
+export const register = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password }: RegisterRequest = req.body;
 
         // Check if user already exists
         const existingUser = await prisma.user.findFirst({
@@ -111,9 +116,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Login user
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const { email, password } = req.body;
+        const { email, password }: LoginRequest = req.body;
 
         // Find user by email
         const user = await prisma.user.findUnique({
@@ -194,7 +199,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Refresh token
-export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+export const refreshToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const { refreshToken } = req.body;
 
@@ -263,7 +268,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 };
 
 // Get current user profile
-export const getProfile = async (req: Request, res: Response): Promise<void> => {
+export const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
 
@@ -320,7 +325,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Update user profile
-export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+export const updateProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { username, email, profilePicture } = req.body;
@@ -403,7 +408,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 };
 
 // Change password
-export const changePassword = async (req: Request, res: Response): Promise<void> => {
+export const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { currentPassword, newPassword } = req.body;
@@ -468,7 +473,7 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
 };
 
 // Logout (client-side token removal, but we can track it)
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const logout = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         // In a more complex setup, you might want to blacklist the token
         // For now, we'll just send a success response

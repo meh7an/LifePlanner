@@ -1,8 +1,14 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../app';
+import {
+    AuthenticatedRequest,
+    CalendarEventWithDetails,
+    CalendarViewType,
+    WhereClause,
+} from '../types';
 
 // Get all calendars for authenticated user
-export const getCalendars = async (req: Request, res: Response): Promise<void> => {
+export const getCalendars = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
 
@@ -40,7 +46,7 @@ export const getCalendars = async (req: Request, res: Response): Promise<void> =
 };
 
 // Get single calendar by ID
-export const getCalendar = async (req: Request, res: Response): Promise<void> => {
+export const getCalendar = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -102,7 +108,7 @@ export const getCalendar = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Create new calendar
-export const createCalendar = async (req: Request, res: Response): Promise<void> => {
+export const createCalendar = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { name, startDate, endDate } = req.body;
@@ -153,7 +159,7 @@ export const createCalendar = async (req: Request, res: Response): Promise<void>
 };
 
 // Update calendar
-export const updateCalendar = async (req: Request, res: Response): Promise<void> => {
+export const updateCalendar = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -221,7 +227,7 @@ export const updateCalendar = async (req: Request, res: Response): Promise<void>
 };
 
 // Delete calendar
-export const deleteCalendar = async (req: Request, res: Response): Promise<void> => {
+export const deleteCalendar = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -282,7 +288,7 @@ export const deleteCalendar = async (req: Request, res: Response): Promise<void>
 };
 
 // Get events (with filtering)
-export const getEvents = async (req: Request, res: Response): Promise<void> => {
+export const getEvents = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const {
@@ -293,7 +299,15 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
             withTasks = 'false',
             page = '1',
             limit = '50'
-        } = req.query;
+        } = req.query as {
+            calendarId?: string;
+            startDate?: string;
+            endDate?: string;
+            eventType?: string;
+            withTasks?: string;
+            page?: string;
+            limit?: string;
+        };
 
         if (!userId) {
             res.status(401).json({
@@ -304,7 +318,7 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
         }
 
         // Build where clause
-        const where: any = {
+        const where: WhereClause = {
             calendar: {
                 userId
             }
@@ -381,7 +395,7 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Create new event
-export const createEvent = async (req: Request, res: Response): Promise<void> => {
+export const createEvent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { startTime, endTime, eventType, alarm, reminder, calendarId, taskId } = req.body;
@@ -478,7 +492,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Update event
-export const updateEvent = async (req: Request, res: Response): Promise<void> => {
+export const updateEvent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -581,7 +595,7 @@ export const updateEvent = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Delete event
-export const deleteEvent = async (req: Request, res: Response): Promise<void> => {
+export const deleteEvent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { id } = req.params;
@@ -630,15 +644,20 @@ export const deleteEvent = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Get calendar view (events for specific date range)
-export const getCalendarView = async (req: Request, res: Response): Promise<void> => {
+export const getCalendarView = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const {
             startDate,
             endDate,
-            view = 'month', // month, week, day
+            view = 'month',
             calendarId
-        } = req.query;
+        } = req.query as {
+            startDate?: string;
+            endDate?: string;
+            view?: CalendarViewType;
+            calendarId?: string;
+        };
 
         if (!userId) {
             res.status(401).json({
@@ -657,7 +676,7 @@ export const getCalendarView = async (req: Request, res: Response): Promise<void
         }
 
         // Build where clause
-        const where: any = {
+        const where: WhereClause = {
             calendar: { userId },
             startTime: {
                 gte: new Date(startDate as string),
@@ -688,7 +707,7 @@ export const getCalendarView = async (req: Request, res: Response): Promise<void
         });
 
         // Group events by date for easier frontend consumption
-        const eventsByDate: { [key: string]: any[] } = {};
+        const eventsByDate: Record<string, CalendarEventWithDetails[]> = {};
 
         events.forEach((event: any) => {
             const dateKey = event.startTime.toISOString().split('T')[0];
@@ -724,10 +743,10 @@ export const getCalendarView = async (req: Request, res: Response): Promise<void
 };
 
 // Get upcoming events (next 7 days)
-export const getUpcomingEvents = async (req: Request, res: Response): Promise<void> => {
+export const getUpcomingEvents = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
-        const { days = '7' } = req.query;
+        const { days = '7' } = req.query as { days?: string };
 
         if (!userId) {
             res.status(401).json({
