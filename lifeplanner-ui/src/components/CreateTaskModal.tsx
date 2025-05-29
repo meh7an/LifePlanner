@@ -16,7 +16,7 @@ export default function CreateTaskModal({
   selectedDate,
 }: CreateTaskModalProps) {
   const [taskName, setTaskName] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState(60); // default 1 hour
+  const [durationMinutes, setDurationMinutes] = useState(60);
 
   if (!visible) return null;
 

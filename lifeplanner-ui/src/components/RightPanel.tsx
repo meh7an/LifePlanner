@@ -1,6 +1,7 @@
 "use client";
 import TasksPanel from "./panels/TasksPanel";
-import FocusPanel from "./panels/FocusPanel"; // Add at the top
+import FocusPanel from "./panels/FocusPanel";
+import ProfilePanel from "./panels/ProfilePanel";
 
 export default function RightPanel({
   content,
@@ -26,11 +27,10 @@ export default function RightPanel({
       <div className="text-sm text-gray-700 dark:text-gray-300">
         {content === "Tasks" && <TasksPanel />}
         {content === "Focus" && <FocusPanel />}
-
+        {content === "Profile" && <ProfilePanel />}
         {content === "Settings" && (
           <p>Configure your planner preferences here.</p>
         )}
-        {content === "Profile" && <p>This is your user profile view.</p>}
       </div>
     </aside>
   );
