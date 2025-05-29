@@ -56,6 +56,7 @@ app.use('/uploads', express.static('uploads'));
 // Import routes
 import authRoutes from './routes/authRoutes';
 import boardRoutes from './routes/boardRoutes';
+import taskRoutes from './routes/taskRoutes';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -69,7 +70,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
-// app.use('/api/tasks', taskRoutes);
+app.use('/api/tasks', taskRoutes);
 // app.use('/api/calendars', calendarRoutes);
 // app.use('/api/focus', focusRoutes);
 
