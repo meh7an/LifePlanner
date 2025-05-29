@@ -63,6 +63,7 @@ import focusRoutes from './routes/focusRoutes';
 import notesRoutes from './routes/notesRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import sharingRoutes from './routes/sharingRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -82,6 +83,7 @@ app.use('/api/focus', focusRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/share', sharingRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Welcome endpoint
 app.get('/', (req, res) => {
