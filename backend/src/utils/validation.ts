@@ -261,6 +261,55 @@ export const createShareSchema = z.object({
         .default('read')
 });
 
+// Repeat validation schemas
+export const createRepeatSchema = z.object({
+    periodType: z
+        .enum(['daily', 'weekly', 'monthly', 'yearly']),
+    periodValue: z
+        .number()
+        .int('Period value must be an integer')
+        .min(1, 'Period value must be at least 1')
+        .max(365, 'Period value cannot exceed 365')
+        .optional()
+        .default(1),
+    repeatDays: z
+        .array(z.enum(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']))
+        .optional()
+        .default([]),
+    endDate: z
+        .string()
+        .datetime('Invalid end date format')
+        .optional()
+        .transform((val) => val ? new Date(val) : undefined),
+    infiniteRepeat: z
+        .boolean()
+        .optional()
+        .default(false)
+});
+
+export const updateRepeatSchema = z.object({
+    periodType: z
+        .enum(['daily', 'weekly', 'monthly', 'yearly'])
+        .optional(),
+    periodValue: z
+        .number()
+        .int('Period value must be an integer')
+        .min(1, 'Period value must be at least 1')
+        .max(365, 'Period value cannot exceed 365')
+        .optional(),
+    repeatDays: z
+        .array(z.enum(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']))
+        .optional(),
+    endDate: z
+        .string()
+        .datetime('Invalid end date format')
+        .optional()
+        .transform((val) => val ? new Date(val) : undefined),
+    infiniteRepeat: z
+        .boolean()
+        .optional()
+});
+
 // Generic ID validation
 export const idSchema = z.object({
     id: z
