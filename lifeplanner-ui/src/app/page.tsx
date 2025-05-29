@@ -49,7 +49,11 @@ const CalendarLanding = () => {
                   </svg>
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+<<<<<<< HEAD
                   Life Planner
+=======
+                  PlanFlow
+>>>>>>> e0d12eae36209e2e8a6bc52c6f76845749fd2fd1
                 </span>
               </div>
 
@@ -130,7 +134,11 @@ const CalendarLanding = () => {
                     <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                   </div>
                   <div className="text-white font-medium">
+<<<<<<< HEAD
                     Planner Dashboard
+=======
+                    PlanFlow Dashboard
+>>>>>>> e0d12eae36209e2e8a6bc52c6f76845749fd2fd1
                   </div>
                 </div>
                 <div className="p-8">
@@ -339,7 +347,11 @@ const CalendarLanding = () => {
                   </svg>
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+<<<<<<< HEAD
                   Life Planner
+=======
+                  PlanFlow
+>>>>>>> e0d12eae36209e2e8a6bc52c6f76845749fd2fd1
                 </span>
               </div>
 
