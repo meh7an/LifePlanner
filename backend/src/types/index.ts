@@ -325,10 +325,70 @@ export type RepeatPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 // View Types
 export interface View extends BaseEntity {
-    viewType: string;
+    viewType: ViewType;
+    name: string;
+    description?: string;
     defaultStatus: boolean;
-    viewPreferences?: Record<string, any>;
+    viewPreferences?: ViewPreferences;
     userId: string;
+}
+
+export interface ViewPreferences {
+    layout?: 'grid' | 'list' | 'kanban' | 'calendar';
+    columns?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    filters?: {
+        priority?: string[];
+        status?: string[];
+        boardId?: string;
+        dateRange?: {
+            start: string;
+            end: string;
+        };
+    };
+    widgets?: Array<{
+        id: string;
+        type: 'tasks' | 'calendar' | 'focus' | 'notes' | 'stats';
+        position: { x: number; y: number; w: number; h: number };
+        config?: Record<string, any>;
+    }>;
+    theme?: {
+        colorScheme?: 'light' | 'dark' | 'auto';
+        accentColor?: string;
+        compact?: boolean;
+    };
+}
+
+export type ViewType =
+    | 'dashboard'
+    | 'tasks_board'
+    | 'tasks_list'
+    | 'calendar_month'
+    | 'calendar_week'
+    | 'focus_mode'
+    | 'analytics'
+    | 'custom';
+
+export interface ViewTemplate {
+    id: string;
+    name: string;
+    description: string;
+    viewType: ViewType;
+    viewPreferences: ViewPreferences;
+}
+
+export interface ViewStats {
+    overview: {
+        totalViews: number;
+        defaultViews: number;
+        customViews: number;
+    };
+    breakdown: Record<string, number>;
+    mostUsedType: {
+        type: string;
+        count: number;
+    };
 }
 
 // Share Types

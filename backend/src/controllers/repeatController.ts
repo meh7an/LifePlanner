@@ -141,7 +141,7 @@ export const getUserRepeats = async (req: AuthenticatedRequest, res: Response): 
                         }
                     }
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: { id: 'desc' },
                 skip,
                 take: limitNum
             }),

@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { ApiError } from './types';
+import { repeatScheduler } from './services/repeatScheduler';
 
 // Load environment variables
 dotenv.config();
@@ -65,6 +66,8 @@ import dashboardRoutes from './routes/dashboardRoutes';
 import sharingRoutes from './routes/sharingRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import notificationsRoutes from './routes/notificationsRoutes';
+import repeatRoutes from './routes/repeatRoutes';
+import viewsRoutes from './routes/viewsRoutes';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -86,6 +89,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/share', sharingRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/repeats', repeatRoutes);
+app.use('/api/views', viewsRoutes);
 
 // Welcome endpoint
 app.get('/', (req, res) => {
@@ -146,12 +151,14 @@ app.use('*', (req, res) => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('🛑 Shutting down gracefully...');
+    repeatScheduler.stop();
     await prisma.$disconnect();
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
     console.log('🛑 Shutting down gracefully...');
+    repeatScheduler.stop();
     await prisma.$disconnect();
     process.exit(0);
 });
@@ -161,6 +168,12 @@ app.listen(PORT, () => {
     console.log(`🚀 Life Planner API running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
+
+    // Start background services
+    if (process.env.NODE_ENV !== 'test') {
+        repeatScheduler.start();
+        console.log('🔄 Repeat scheduler initialized');
+    }
 });
 
 export default app;

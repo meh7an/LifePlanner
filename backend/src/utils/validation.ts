@@ -310,6 +310,54 @@ export const updateRepeatSchema = z.object({
         .optional()
 });
 
+// View validation schemas
+export const viewPreferencesSchema = z.object({
+    layout: z.enum(['grid', 'list', 'kanban', 'calendar']).optional(),
+    columns: z.number().int().min(1).max(6).optional(),
+    sortBy: z.string().optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
+    filters: z.object({
+        priority: z.array(z.string()).optional(),
+        status: z.array(z.string()).optional(),
+        boardId: z.string().optional(),
+        dateRange: z.object({
+            start: z.string(),
+            end: z.string()
+        }).optional()
+    }).optional(),
+    widgets: z.array(z.object({
+        id: z.string(),
+        type: z.enum(['tasks', 'calendar', 'focus', 'notes', 'stats']),
+        position: z.object({
+            x: z.number(),
+            y: z.number(),
+            w: z.number(),
+            h: z.number()
+        }),
+        config: z.record(z.any()).optional()
+    })).optional(),
+    theme: z.object({
+        colorScheme: z.enum(['light', 'dark', 'auto']).optional(),
+        accentColor: z.string().optional(),
+        compact: z.boolean().optional()
+    }).optional()
+});
+
+export const createViewSchema = z.object({
+    viewType: z.enum(['dashboard', 'tasks_board', 'tasks_list', 'calendar_month', 'calendar_week', 'focus_mode', 'analytics', 'custom']),
+    name: z.string().min(1, 'View name is required').max(100, 'View name must be less than 100 characters'),
+    description: z.string().max(500, 'Description must be less than 500 characters').optional(),
+    defaultStatus: z.boolean().optional().default(false),
+    viewPreferences: viewPreferencesSchema.optional().default({})
+});
+
+export const updateViewSchema = z.object({
+    name: z.string().min(1, 'View name is required').max(100, 'View name must be less than 100 characters').optional(),
+    description: z.string().max(500, 'Description must be less than 500 characters').optional(),
+    defaultStatus: z.boolean().optional(),
+    viewPreferences: viewPreferencesSchema.optional()
+});
+
 // Generic ID validation
 export const idSchema = z.object({
     id: z
