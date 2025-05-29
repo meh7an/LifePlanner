@@ -69,6 +69,7 @@ function getWeekDays(date: Date): Date[] {
 // Sidebar Component
 const Sidebar = ({ onSelect }: { onSelect: (label: string) => void }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  console.log("Dark mode:", isDarkMode);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -420,7 +421,7 @@ const TodayOverview = () => {
                 d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            Today's Tasks
+            Today&apos;s Tasks
           </h3>
           <div className="space-y-3">
             {todayTasks.map((task) => (
