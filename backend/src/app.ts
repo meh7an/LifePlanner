@@ -68,6 +68,9 @@ import uploadRoutes from './routes/uploadRoutes';
 import notificationsRoutes from './routes/notificationsRoutes';
 import repeatRoutes from './routes/repeatRoutes';
 import viewsRoutes from './routes/viewsRoutes';
+import postsRoutes from './routes/postsRoutes';
+import archivesRoutes from './routes/archivesRoutes';
+import memoriesRoutes from './routes/memoriesRoutes';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -91,12 +94,32 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/repeats', repeatRoutes);
 app.use('/api/views', viewsRoutes);
+app.use('/api/posts', postsRoutes);
+app.use('/api/archives', archivesRoutes);
+app.use('/api/memories', memoriesRoutes);
 
 // Welcome endpoint
 app.get('/', (req, res) => {
     res.json({
         message: '🚀 Welcome to Life Planner API!',
         version: '1.0.0',
+        endpoints: {
+            auth: '/api/auth',
+            boards: '/api/boards',
+            tasks: '/api/tasks',
+            calendars: '/api/calendars',
+            focus: '/api/focus',
+            notes: '/api/notes',
+            dashboard: '/api/dashboard',
+            sharing: '/api/share',
+            upload: '/api/upload',
+            notifications: '/api/notifications',
+            repeats: '/api/repeats',
+            views: '/api/views',
+            posts: '/api/posts',
+            archives: '/api/archives',
+            memories: '/api/memories'
+        },
         docs: '/api/docs',
         health: '/health'
     });

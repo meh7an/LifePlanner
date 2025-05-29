@@ -85,7 +85,7 @@ export const getUserViews = async (req: AuthenticatedRequest, res: Response): Pr
                 where,
                 orderBy: [
                     { defaultStatus: 'desc' },
-                    { createdAt: 'desc' }
+                    { id: 'desc' }
                 ],
                 skip,
                 take: limitNum
@@ -214,7 +214,7 @@ export const createView = async (req: AuthenticatedRequest, res: Response): Prom
                 name,
                 description,
                 defaultStatus,
-                viewPreferences,
+                viewPreferences: viewPreferences as any,
                 userId
             }
         });
@@ -303,12 +303,12 @@ export const updateView = async (req: AuthenticatedRequest, res: Response): Prom
                 ...(name && { name }),
                 ...(description !== undefined && { description }),
                 ...(defaultStatus !== undefined && { defaultStatus }),
-                ...(viewPreferences && { viewPreferences })
+                ...(viewPreferences && { viewPreferences: viewPreferences as any })
             }
         });
 
         res.json({
-            message: `View "${existingView.name}" updated successfully! ✨`,
+            message: `View "${updatedView.name || 'Untitled'}" updated successfully! ✨`,
             view: updatedView
         });
 
@@ -356,7 +356,7 @@ export const deleteView = async (req: AuthenticatedRequest, res: Response): Prom
         });
 
         res.json({
-            message: `View "${existingView.name}" deleted successfully! 🗑️`
+            message: `View "${existingView.name || 'Untitled'}" deleted successfully! 🗑️`
         });
 
     } catch (error) {
@@ -469,7 +469,7 @@ export const duplicateView = async (req: AuthenticatedRequest, res: Response): P
                 name: name || `${existingView.name} (Copy)`,
                 description: existingView.description,
                 defaultStatus: false, // Never set duplicate as default
-                viewPreferences: existingView.viewPreferences,
+                viewPreferences: existingView.viewPreferences as any,
                 userId
             }
         });

@@ -194,6 +194,8 @@ model Repeat {
 
 model View {
   id              String @id @default(cuid())
+  name            String
+  description     String?
   viewType        String // days, weeks, duration, focus_mode, etc.
   defaultStatus   Boolean @default(false)
   viewPreferences Json?  // Store view settings as JSON
