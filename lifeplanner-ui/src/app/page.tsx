@@ -366,7 +366,9 @@ const CalendarLanding = () => {
             </div>
 
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 text-center text-gray-500 dark:text-gray-400">
-              <p>&copy; 2025 PlanFlow. Made with 💚 for productivity lovers.</p>
+              <p>
+                &copy; 2025 Life Planner. Made with 💚 for productivity lovers.
+              </p>
             </div>
           </div>
         </footer>
