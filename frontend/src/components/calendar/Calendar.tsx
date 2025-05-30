@@ -1,0 +1,1388 @@
+// =============================================================================
+// 📅 LIFE PLANNER - COMPLETE CALENDAR COMPONENT SYSTEM
+// =============================================================================
+
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  CalendarEvent,
+  CreateEventRequest,
+  EVENT_TYPES,
+  CALENDAR_VIEWS,
+} from "@/lib/types";
+import { useCalendarStore } from "@/lib/stores/calendarStore";
+import { useUIStore } from "@/lib/stores/uiStore";
+import { useTaskStore } from "@/lib/stores/taskStore";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  isToday,
+  addMonths,
+  subMonths,
+  addDays,
+  setHours,
+  setMinutes,
+  parseISO,
+  formatISO,
+} from "date-fns";
+
+// =============================================================================
+// 🎯 CALENDAR UTILITIES
+// =============================================================================
+
+const getCalendarDays = (date: Date) => {
+  const monthStart = startOfMonth(date);
+  const monthEnd = endOfMonth(date);
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+
+  return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+};
+
+const getWeekDays = (date: Date) => {
+  const weekStart = startOfWeek(date);
+  const weekEnd = endOfWeek(date);
+  return eachDayOfInterval({ start: weekStart, end: weekEnd });
+};
+
+const getEventsByDate = (events: CalendarEvent[], date: Date) => {
+  return events.filter((event) => {
+    const eventDate = parseISO(event.startTime);
+    return isSameDay(eventDate, date);
+  });
+};
+
+const getEventColor = (eventType: CalendarEvent["eventType"]) => {
+  const colors = {
+    meeting: "bg-blue-500",
+    task: "bg-green-500",
+    reminder: "bg-yellow-500",
+    personal: "bg-purple-500",
+    work: "bg-indigo-500",
+    other: "bg-gray-500",
+  };
+  return colors[eventType] || colors.other;
+};
+
+// =============================================================================
+// 🗓️ EVENT MODAL COMPONENT
+// =============================================================================
+
+interface EventModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  event?: CalendarEvent | null;
+  selectedDate?: Date;
+  calendarId?: string;
+}
+
+const EventModal: React.FC<EventModalProps> = ({
+  isOpen,
+  onClose,
+  event,
+  selectedDate,
+  calendarId,
+}) => {
+  const { calendars, createEvent, updateEvent, deleteEvent } =
+    useCalendarStore();
+  const { tasks } = useTaskStore();
+  const { addNotification } = useUIStore();
+
+  const [formData, setFormData] = useState<CreateEventRequest>({
+    startTime: selectedDate ? formatISO(selectedDate) : formatISO(new Date()),
+    endTime: selectedDate
+      ? formatISO(addDays(selectedDate, 0))
+      : formatISO(new Date()),
+    eventType: "meeting",
+    calendarID: calendarId || calendars[0]?.calendarID || "",
+    alarm: false,
+    reminder: 15,
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (event) {
+      setFormData({
+        startTime: event.startTime,
+        endTime: event.endTime,
+        eventType: event.eventType,
+        calendarID: event.calendarID,
+        alarm: event.alarm || false,
+        reminder: event.reminder || 15,
+        taskID: event.taskID || undefined,
+      });
+    } else if (selectedDate) {
+      const startTime = setHours(setMinutes(selectedDate, 0), 9);
+      const endTime = setHours(setMinutes(selectedDate, 0), 10);
+      setFormData((prev) => ({
+        ...prev,
+        startTime: formatISO(startTime),
+        endTime: formatISO(endTime),
+      }));
+    }
+  }, [event, selectedDate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    try {
+      if (event) {
+        const success = await updateEvent(event.eventID, formData);
+        if (success) {
+          addNotification({
+            notificationID: crypto.randomUUID(),
+            type: "system_announcement",
+            title: "Event Updated! 🎉",
+            message: "Your event has been updated successfully.",
+            read: false,
+            createdAt: new Date().toISOString(),
+            userID: "system",
+          });
+          onClose();
+        }
+      } else {
+        const success = await createEvent(formData);
+        if (success) {
+          addNotification({
+            notificationID: crypto.randomUUID(),
+            type: "system_announcement",
+            title: "Event Created! ✨",
+            message: "Your new event has been added to the calendar.",
+            read: false,
+            createdAt: new Date().toISOString(),
+            userID: "system",
+          });
+          onClose();
+        }
+      }
+    } catch (error) {
+      console.error("Error saving event:", error);
+      setErrors({ general: "Failed to save event. Please try again." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!event) return;
+
+    setLoading(true);
+    try {
+      const success = await deleteEvent(event.eventID);
+      if (success) {
+        addNotification({
+          notificationID: crypto.randomUUID(),
+          type: "system_announcement",
+          title: "Event Deleted! 🗑️",
+          message: "The event has been removed from your calendar.",
+          read: false,
+          createdAt: new Date().toISOString(),
+          userID: "system",
+        });
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      setErrors({ general: "Failed to delete event. Please try again." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="p-6 border-b border-green-100 dark:border-green-800/30">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {event ? "Edit Event" : "Create Event"}
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+            >
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {errors.general && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-600 dark:text-red-400 text-sm">
+                {errors.general}
+              </p>
+            </div>
+          )}
+
+          {/* Event Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Event Type
+            </label>
+            <select
+              value={formData.eventType}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  eventType: e.target.value as CalendarEvent["eventType"],
+                }))
+              }
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+            >
+              {EVENT_TYPES.map((type) => (
+                <option key={type} value={type} className="capitalize">
+                  {type.replace("_", " ")}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Calendar Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Calendar
+            </label>
+            <select
+              value={formData.calendarID}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, calendarId: e.target.value }))
+              }
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+            >
+              {calendars.map((calendar) => (
+                <option key={calendar.calendarID} value={calendar.calendarID}>
+                  {calendar.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date & Time */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Start Time
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.startTime.slice(0, 16)}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    startTime: formatISO(new Date(e.target.value)),
+                  }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                End Time
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.endTime.slice(0, 16)}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    endTime: formatISO(new Date(e.target.value)),
+                  }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Task Link */}
+          {tasks.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Link to Task (Optional)
+              </label>
+              <select
+                value={formData.taskID || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    taskId: e.target.value || undefined,
+                  }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+              >
+                <option value="">No task linked</option>
+                {tasks.map((task) => (
+                  <option key={task.taskID} value={task.taskID}>
+                    {task.taskName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Reminder Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="alarm"
+                checked={formData.alarm}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, alarm: e.target.checked }))
+                }
+                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+              />
+              <label
+                htmlFor="alarm"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Enable alarm notification
+              </label>
+            </div>
+
+            {formData.alarm && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Remind me (minutes before)
+                </label>
+                <select
+                  value={formData.reminder}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      reminder: parseInt(e.target.value),
+                    }))
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                >
+                  <option value={5}>5 minutes</option>
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={60}>1 hour</option>
+                  <option value={120}>2 hours</option>
+                  <option value={1440}>1 day</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            {event && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Delete Event
+              </button>
+            )}
+            <div className="flex gap-3 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-medium transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {loading
+                  ? "Saving..."
+                  : event
+                  ? "Update Event"
+                  : "Create Event"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
+// 📅 MONTH VIEW COMPONENT
+// =============================================================================
+
+interface MonthViewProps {
+  selectedDate: Date;
+  events: CalendarEvent[];
+  onDateSelect: (date: Date) => void;
+  onEventClick: (event: CalendarEvent) => void;
+  onCreateEvent: (date: Date) => void;
+}
+
+const MonthView: React.FC<MonthViewProps> = ({
+  selectedDate,
+  events,
+  onDateSelect,
+  onEventClick,
+  onCreateEvent,
+}) => {
+  const days = useMemo(() => getCalendarDays(selectedDate), [selectedDate]);
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 overflow-hidden">
+      {/* Day Headers */}
+      <div className="grid grid-cols-7 bg-green-50 dark:bg-green-900/20 border-b border-green-100 dark:border-green-800/30">
+        {dayNames.map((day) => (
+          <div
+            key={day}
+            className="p-4 text-center text-sm font-semibold text-green-700 dark:text-green-300"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7">
+        {days.map((day, index) => {
+          const dayEvents = getEventsByDate(events, day);
+          const isCurrentMonth = isSameMonth(day, selectedDate);
+          const isSelected = isSameDay(day, selectedDate);
+          const isDayToday = isToday(day);
+
+          return (
+            <div
+              key={index}
+              className={`min-h-[120px] p-2 border-b border-r border-gray-100 dark:border-gray-700 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors cursor-pointer ${
+                !isCurrentMonth ? "bg-gray-50 dark:bg-gray-900/50" : ""
+              } ${isSelected ? "bg-green-100 dark:bg-green-900/30" : ""}`}
+              onClick={() => {
+                onDateSelect(day);
+                if (dayEvents.length === 0) {
+                  onCreateEvent(day);
+                }
+              }}
+            >
+              {/* Date Number */}
+              <div className="flex items-center justify-between mb-2">
+                <div
+                  className={`
+                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                  ${
+                    isDayToday
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                      : ""
+                  }
+                  ${
+                    isSelected && !isDayToday
+                      ? "bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200"
+                      : ""
+                  }
+                  ${
+                    !isCurrentMonth
+                      ? "text-gray-400 dark:text-gray-600"
+                      : "text-gray-900 dark:text-white"
+                  }
+                `}
+                >
+                  {format(day, "d")}
+                </div>
+                {dayEvents.length > 0 && (
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                )}
+              </div>
+
+              {/* Events */}
+              <div className="space-y-1">
+                {dayEvents.slice(0, 3).map((event) => (
+                  <div
+                    key={event.eventID}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEventClick(event);
+                    }}
+                    className={`
+                      px-2 py-1 rounded text-xs font-medium text-white truncate cursor-pointer hover:opacity-80 transition-opacity
+                      ${getEventColor(event.eventType)}
+                    `}
+                  >
+                    {format(parseISO(event.startTime), "HH:mm")}{" "}
+                    {event.task?.taskName || `${event.eventType}`}
+                  </div>
+                ))}
+                {dayEvents.length > 3 && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+                    +{dayEvents.length - 3} more
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
+// 📅 WEEK VIEW COMPONENT
+// =============================================================================
+
+interface WeekViewProps {
+  selectedDate: Date;
+  events: CalendarEvent[];
+  onDateSelect: (date: Date) => void;
+  onEventClick: (event: CalendarEvent) => void;
+  onCreateEvent: (date: Date) => void;
+}
+
+const WeekView: React.FC<WeekViewProps> = ({
+  selectedDate,
+  events,
+  onDateSelect,
+  onEventClick,
+  onCreateEvent,
+}) => {
+  const weekDays = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 overflow-hidden">
+      {/* Week Header */}
+      <div className="grid grid-cols-8 border-b border-green-100 dark:border-green-800/30">
+        <div className="p-4 bg-green-50 dark:bg-green-900/20"></div>
+        {weekDays.map((day, index) => {
+          const isDayToday = isToday(day);
+          const isSelected = isSameDay(day, selectedDate);
+
+          return (
+            <button
+              key={index}
+              onClick={() => onDateSelect(day)}
+              className={`p-4 text-center border-r border-green-100 dark:border-green-800/30 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors ${
+                isDayToday
+                  ? "bg-green-100 dark:bg-green-900/30"
+                  : "bg-green-50 dark:bg-green-900/20"
+              } ${isSelected ? "ring-2 ring-green-500" : ""}`}
+            >
+              <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                {dayNames[day.getDay()].slice(0, 3)}
+              </div>
+              <div
+                className={`text-lg font-semibold mt-1 ${
+                  isDayToday
+                    ? "text-green-700 dark:text-green-300"
+                    : "text-gray-900 dark:text-white"
+                }`}
+              >
+                {format(day, "d")}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Time Grid */}
+      <div className="max-h-96 overflow-y-auto">
+        {hours.map((hour) => (
+          <div
+            key={hour}
+            className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700"
+          >
+            <div className="p-2 text-right text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 min-w-0">
+              {hour === 0
+                ? "12 AM"
+                : hour < 12
+                ? `${hour} AM`
+                : hour === 12
+                ? "12 PM"
+                : `${hour - 12} PM`}
+            </div>
+            {weekDays.map((day, dayIndex) => {
+              const hourEvents = events.filter((event) => {
+                const eventDate = parseISO(event.startTime);
+                const eventHour = eventDate.getHours();
+                return isSameDay(eventDate, day) && eventHour === hour;
+              });
+
+              return (
+                <div
+                  key={dayIndex}
+                  className="h-12 border-r border-gray-100 dark:border-gray-700 relative hover:bg-green-50 dark:hover:bg-green-900/10 cursor-pointer"
+                  onClick={() => {
+                    const clickedTime = setHours(setMinutes(day, 0), hour);
+                    onCreateEvent(clickedTime);
+                  }}
+                >
+                  {hourEvents.map((event) => (
+                    <div
+                      key={event.eventID}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
+                      className={`
+                        absolute inset-1 rounded text-white text-xs p-1 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity
+                        ${getEventColor(event.eventType)}
+                      `}
+                    >
+                      <div className="font-medium truncate">
+                        {event.task?.taskName || event.eventType}
+                      </div>
+                      <div className="text-xs opacity-90">
+                        {format(parseISO(event.startTime), "HH:mm")} -{" "}
+                        {format(parseISO(event.endTime), "HH:mm")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
+// 📅 DAY VIEW COMPONENT
+// =============================================================================
+
+interface DayViewProps {
+  selectedDate: Date;
+  events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
+  onCreateEvent: (date: Date) => void;
+}
+
+const DayView: React.FC<DayViewProps> = ({
+  selectedDate,
+  events,
+  onEventClick,
+  onCreateEvent,
+}) => {
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const dayEvents = getEventsByDate(events, selectedDate);
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 overflow-hidden">
+      {/* Day Header */}
+      <div className="p-6 border-b border-green-100 dark:border-green-800/30 bg-green-50 dark:bg-green-900/20">
+        <h2 className="text-2xl font-bold text-green-700 dark:text-green-300">
+          {format(selectedDate, "EEEE, MMMM d, yyyy")}
+        </h2>
+        <p className="text-green-600 dark:text-green-400 mt-1">
+          {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}{" "}
+          scheduled
+        </p>
+      </div>
+
+      {/* Time Slots */}
+      <div className="max-h-96 overflow-y-auto">
+        {hours.map((hour) => {
+          const hourEvents = dayEvents.filter((event) => {
+            const eventHour = parseISO(event.startTime).getHours();
+            return eventHour === hour;
+          });
+
+          return (
+            <div
+              key={hour}
+              className="flex border-b border-gray-100 dark:border-gray-700"
+            >
+              <div className="w-20 p-3 text-right text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                {hour === 0
+                  ? "12 AM"
+                  : hour < 12
+                  ? `${hour} AM`
+                  : hour === 12
+                  ? "12 PM"
+                  : `${hour - 12} PM`}
+              </div>
+              <div
+                className="flex-1 min-h-[60px] p-2 hover:bg-green-50 dark:hover:bg-green-900/10 cursor-pointer relative"
+                onClick={() => {
+                  const clickedTime = setHours(
+                    setMinutes(selectedDate, 0),
+                    hour
+                  );
+                  onCreateEvent(clickedTime);
+                }}
+              >
+                {hourEvents.map((event) => (
+                  <div
+                    key={event.eventID}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEventClick(event);
+                    }}
+                    className={`
+                      mb-2 p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity
+                      ${getEventColor(event.eventType)} text-white
+                    `}
+                  >
+                    <div className="font-medium">
+                      {event.task?.taskName || event.eventType}
+                    </div>
+                    <div className="text-sm opacity-90 mt-1">
+                      {format(parseISO(event.startTime), "h:mm a")} -{" "}
+                      {format(parseISO(event.endTime), "h:mm a")}
+                    </div>
+                    {event.alarm && (
+                      <div className="text-xs opacity-75 mt-1 flex items-center">
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 17h5l-5 5v-5zM8.5 14.5A2.5 2.5 0 018 12V7a4 4 0 118 0v5a2.5 2.5 0 01-.5 2.5L12 17l-3.5-2.5z"
+                          />
+                        </svg>
+                        Reminder set
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {hourEvents.length === 0 && (
+                  <div className="text-gray-400 dark:text-gray-600 text-sm italic p-2">
+                    Click to add event
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
+// 🗓️ MAIN CALENDAR COMPONENT
+// =============================================================================
+
+interface CalendarProps {
+  className?: string;
+}
+
+const CalendarComponent: React.FC<CalendarProps> = ({ className = "" }) => {
+  const {
+    calendars,
+    events,
+    selectedDate,
+    view,
+    eventsLoading,
+    calendarsLoading,
+    setSelectedDate,
+    setView,
+    navigateDate,
+    fetchCalendars,
+    fetchEvents,
+  } = useCalendarStore();
+
+  const [eventModal, setEventModal] = useState({
+    isOpen: false,
+    event: null as CalendarEvent | null,
+    selectedDate: null as Date | null,
+  });
+
+  useEffect(() => {
+    fetchCalendars();
+    fetchEvents();
+  }, [fetchCalendars, fetchEvents]);
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    navigateDate(direction);
+  };
+
+  const handleViewChange = (newView: typeof view) => {
+    setView(newView);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  const handleCreateEvent = (date: Date) => {
+    setEventModal({
+      isOpen: true,
+      event: null,
+      selectedDate: date,
+    });
+  };
+
+  const handleEventClick = (event: CalendarEvent) => {
+    setEventModal({
+      isOpen: true,
+      event,
+      selectedDate: null,
+    });
+  };
+
+  const closeEventModal = () => {
+    setEventModal({
+      isOpen: false,
+      event: null,
+      selectedDate: null,
+    });
+  };
+
+  const handleTodayClick = () => {
+    setSelectedDate(new Date());
+  };
+
+  if (calendarsLoading) {
+    return (
+      <div className={`${className} animate-pulse`}>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+            <div className="flex space-x-2">
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+            </div>
+          </div>
+          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} space-y-6`}>
+      {/* Calendar Header */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {/* Title & Navigation */}
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+              {view === "month" && format(selectedDate, "MMMM yyyy")}
+              {view === "week" &&
+                `Week of ${format(selectedDate, "MMM d, yyyy")}`}
+              {view === "day" && format(selectedDate, "EEEE, MMMM d, yyyy")}
+            </h1>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleNavigate("prev")}
+                className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/20 transition-colors text-green-600 dark:text-green-400"
+                disabled={eventsLoading}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+
+              <button
+                onClick={handleTodayClick}
+                className="px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                disabled={eventsLoading}
+              >
+                Today
+              </button>
+
+              <button
+                onClick={() => handleNavigate("next")}
+                className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/20 transition-colors text-green-600 dark:text-green-400"
+                disabled={eventsLoading}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* View Controls */}
+          <div className="flex items-center space-x-4">
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              {CALENDAR_VIEWS.map((viewOption) => (
+                <button
+                  key={viewOption}
+                  onClick={() => handleViewChange(viewOption as typeof view)}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                    view === viewOption
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm"
+                      : "text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
+                  }`}
+                  disabled={eventsLoading}
+                >
+                  {viewOption.charAt(0).toUpperCase() + viewOption.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Create Event Button */}
+            <button
+              onClick={() => handleCreateEvent(selectedDate)}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2"
+              disabled={eventsLoading}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              <span>New Event</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Calendar Summary */}
+        {events.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span>
+                {events.filter((e) => e.eventType === "task").length} Tasks
+              </span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <span>
+                {events.filter((e) => e.eventType === "meeting").length}{" "}
+                Meetings
+              </span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <span>
+                {events.filter((e) => e.eventType === "personal").length}{" "}
+                Personal
+              </span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <span>
+                {events.filter((e) => e.eventType === "reminder").length}{" "}
+                Reminders
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Calendar Views */}
+      {eventsLoading ? (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-8">
+          <div className="animate-pulse">
+            <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {view === "month" && (
+            <MonthView
+              selectedDate={selectedDate}
+              events={events}
+              onDateSelect={handleDateSelect}
+              onEventClick={handleEventClick}
+              onCreateEvent={handleCreateEvent}
+            />
+          )}
+
+          {view === "week" && (
+            <WeekView
+              selectedDate={selectedDate}
+              events={events}
+              onDateSelect={handleDateSelect}
+              onEventClick={handleEventClick}
+              onCreateEvent={handleCreateEvent}
+            />
+          )}
+
+          {view === "day" && (
+            <DayView
+              selectedDate={selectedDate}
+              events={events}
+              onEventClick={handleEventClick}
+              onCreateEvent={handleCreateEvent}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Event Modal */}
+      <EventModal
+        isOpen={eventModal.isOpen}
+        onClose={closeEventModal}
+        event={eventModal.event}
+        selectedDate={eventModal.selectedDate || undefined}
+        calendarId={calendars[0]?.calendarID}
+      />
+    </div>
+  );
+};
+
+// =============================================================================
+// 📱 MINI CALENDAR COMPONENT (for sidebars)
+// =============================================================================
+
+interface MiniCalendarProps {
+  selectedDate: Date;
+  onDateSelect: (date: Date) => void;
+  events?: CalendarEvent[];
+  className?: string;
+}
+
+const MiniCalendar: React.FC<MiniCalendarProps> = ({
+  selectedDate,
+  onDateSelect,
+  events = [],
+  className = "",
+}) => {
+  const [currentMonth, setCurrentMonth] = useState(selectedDate);
+  const days = useMemo(() => getCalendarDays(currentMonth), [currentMonth]);
+  const dayNames = ["S", "M", "T", "W", "T", "F", "S"];
+
+  const navigateMonth = (direction: "prev" | "next") => {
+    setCurrentMonth((prev) =>
+      direction === "next" ? addMonths(prev, 1) : subMonths(prev, 1)
+    );
+  };
+
+  return (
+    <div
+      className={`${className} bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-4`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-900 dark:text-white">
+          {format(currentMonth, "MMM yyyy")}
+        </h3>
+        <div className="flex space-x-1">
+          <button
+            onClick={() => navigateMonth("prev")}
+            className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/20 transition-colors text-green-600 dark:text-green-400"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={() => navigateMonth("next")}
+            className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/20 transition-colors text-green-600 dark:text-green-400"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Day Headers */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {dayNames.map((day) => (
+          <div
+            key={day}
+            className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((day, index) => {
+          const isCurrentMonth = isSameMonth(day, currentMonth);
+          const isSelected = isSameDay(day, selectedDate);
+          const isDayToday = isToday(day);
+          const hasEvents = events.some((event) =>
+            isSameDay(parseISO(event.startTime), day)
+          );
+
+          return (
+            <button
+              key={index}
+              onClick={() => onDateSelect(day)}
+              className={`
+                w-8 h-8 text-xs rounded-lg transition-colors relative
+                ${
+                  isDayToday
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium"
+                    : ""
+                }
+                ${
+                  isSelected && !isDayToday
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 font-medium"
+                    : ""
+                }
+                ${
+                  !isCurrentMonth
+                    ? "text-gray-400 dark:text-gray-600"
+                    : "text-gray-900 dark:text-white hover:bg-green-50 dark:hover:bg-green-900/20"
+                }
+              `}
+            >
+              {format(day, "d")}
+              {hasEvents && isCurrentMonth && (
+                <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
+// 📅 UPCOMING EVENTS WIDGET
+// =============================================================================
+
+interface UpcomingEventsProps {
+  events: CalendarEvent[];
+  limit?: number;
+  className?: string;
+  onEventClick?: (event: CalendarEvent) => void;
+}
+
+const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
+  events,
+  limit = 5,
+  className = "",
+  onEventClick,
+}) => {
+  const upcomingEvents = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter((event) => parseISO(event.startTime) > now)
+      .sort(
+        (a, b) =>
+          parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()
+      )
+      .slice(0, limit);
+  }, [events, limit]);
+
+  if (upcomingEvents.length === 0) {
+    return (
+      <div
+        className={`${className} bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6`}
+      >
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+          <svg
+            className="w-5 h-5 text-green-500 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          Upcoming Events
+        </h3>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <svg
+            className="w-12 h-12 mx-auto mb-3 opacity-50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          <p>No upcoming events</p>
+          <p className="text-sm mt-1">Your calendar is clear!</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`${className} bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6`}
+    >
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+        <svg
+          className="w-5 h-5 text-green-500 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        Upcoming Events
+      </h3>
+
+      <div className="space-y-3">
+        {upcomingEvents.map((event) => {
+          const eventDate = parseISO(event.startTime);
+          const isToday = isSameDay(eventDate, new Date());
+          const isTomorrow = isSameDay(eventDate, addDays(new Date(), 1));
+
+          return (
+            <div
+              key={event.eventID}
+              onClick={() => onEventClick?.(event)}
+              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors cursor-pointer"
+            >
+              <div
+                className={`w-3 h-3 rounded-full mt-1.5 ${getEventColor(
+                  event.eventType
+                )}`}
+              ></div>
+
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 dark:text-white truncate">
+                  {event.task?.taskName || event.eventType}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {isToday
+                    ? "Today"
+                    : isTomorrow
+                    ? "Tomorrow"
+                    : format(eventDate, "MMM d")}{" "}
+                  at {format(eventDate, "h:mm a")}
+                </div>
+                {event.alarm && (
+                  <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                    <svg
+                      className="w-3 h-3 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-5 5v-5zM8.5 14.5A2.5 2.5 0 018 12V7a4 4 0 118 0v5a2.5 2.5 0 01-.5 2.5L12 17l-3.5-2.5z"
+                      />
+                    </svg>
+                    Reminder set
+                  </div>
+                )}
+              </div>
+
+              <div className="text-xs text-gray-400 dark:text-gray-500 capitalize">
+                {event.eventType}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
+// 🚀 EXPORT ALL COMPONENTS
+// =============================================================================
+
+export {
+  CalendarComponent as Calendar,
+  MonthView,
+  WeekView,
+  DayView,
+  EventModal,
+  MiniCalendar,
+  UpcomingEvents,
+};
+
+export default CalendarComponent;
