@@ -196,6 +196,7 @@ export interface TaskFilters {
     status?: Task['status'];
     dueDate?: string;
     search?: string;
+    [key: string]: unknown;
 }
 
 export interface TodayTasksOverview {
