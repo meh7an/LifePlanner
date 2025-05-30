@@ -1,10 +1,22 @@
+// app/page.tsx - Landing page (our beautiful green homepage)
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { redirect } from "next/navigation";
 
-const CalendarLanding = () => {
+const HomePage = () => {
+  const { isAuthenticated } = useAuthStore();
   const [scrollY, setScrollY] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      redirect("/dashboard");
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -44,7 +56,7 @@ const CalendarLanding = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"
                     />
                   </svg>
                 </div>
@@ -61,7 +73,7 @@ const CalendarLanding = () => {
                   Sign In
                 </Link>
                 <Link
-                  href="/dashboard"
+                  href="/register"
                   className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                 >
                   Get Started
@@ -93,12 +105,15 @@ const CalendarLanding = () => {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                 <Link
-                  href="/dashboard"
+                  href="/register"
                   className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-xl hover:shadow-2xl"
                 >
                   Start Planning Today
                 </Link>
-                <button className="text-green-600 dark:text-green-400 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors flex items-center space-x-2">
+                <Link
+                  href="/login"
+                  className="text-green-600 dark:text-green-400 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors flex items-center space-x-2"
+                >
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -109,15 +124,15 @@ const CalendarLanding = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2z"
+                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
                     />
                   </svg>
-                  <span>Watch Demo</span>
-                </button>
+                  <span>Sign In</span>
+                </Link>
               </div>
             </div>
 
-            {/* Hero Visual */}
+            {/* Hero Visual - Dashboard Preview */}
             <div
               className="relative max-w-4xl mx-auto"
               style={{ transform: `translateY(${scrollY * 0.1}px)` }}
@@ -130,7 +145,7 @@ const CalendarLanding = () => {
                     <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                   </div>
                   <div className="text-white font-medium">
-                    Planner Dashboard
+                    Life Planner Dashboard
                   </div>
                 </div>
                 <div className="p-8">
@@ -269,27 +284,6 @@ const CalendarLanding = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-800 dark:to-emerald-800">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-              {[
-                { number: "10K+", label: "Happy Users" },
-                { number: "1M+", label: "Tasks Completed" },
-                { number: "500K+", label: "Focus Hours" },
-                { number: "99.9%", label: "Uptime" },
-              ].map((stat, index) => (
-                <div key={index} className="text-white">
-                  <div className="text-4xl md:text-5xl font-bold mb-2">
-                    {stat.number}
-                  </div>
-                  <div className="text-green-100 text-lg">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
           <div className="max-w-4xl mx-auto text-center">
@@ -306,7 +300,7 @@ const CalendarLanding = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/dashboard"
+                href="/register"
                 className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-xl hover:shadow-2xl"
               >
                 Get Started Free
@@ -334,7 +328,7 @@ const CalendarLanding = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"
                     />
                   </svg>
                 </div>
@@ -377,4 +371,4 @@ const CalendarLanding = () => {
   );
 };
 
-export default CalendarLanding;
+export default HomePage;

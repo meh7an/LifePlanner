@@ -77,7 +77,7 @@ export const useFocusStore = create<FocusState>()(
                     const activeSession = response.data;
 
                     set((state) => {
-                        state.activeSession = activeSession;
+                        state.activeSession = activeSession ?? null;
                         if (activeSession) {
                             state.isRunning = true;
                             state.currentDuration = activeSession.currentDuration || 0;
@@ -130,7 +130,7 @@ export const useFocusStore = create<FocusState>()(
                     const response = await apiClient.startFocusSession(data);
                     if (response.data) {
                         set((state) => {
-                            state.activeSession = response.data;
+                            state.activeSession = response.data ?? null;
                             state.isRunning = true;
                             state.currentDuration = 0;
                             state.startLoading = false;
