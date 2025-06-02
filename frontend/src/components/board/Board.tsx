@@ -63,7 +63,7 @@ const getStatusColor = (status: Task["status"]): string => {
     todo: "text-gray-600 bg-gray-100 dark:bg-gray-700",
     in_progress: "text-blue-600 bg-blue-100 dark:bg-blue-900/30",
     completed: "text-green-600 bg-green-100 dark:bg-green-900/30",
-    cancelled: "text-red-600 bg-red-100 dark:bg-red-900/30",
+    canceled: "text-red-600 bg-red-100 dark:bg-red-900/30",
   };
   return colors[status];
 };
@@ -732,7 +732,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-green-100 dark:hover:bg-green-900/20"
               }`}
             >
-              {status.replace("_", " ")}
+              {status}
             </button>
           ))}
         </div>
@@ -1075,7 +1075,7 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
             <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
               {
                 boardTasks.filter(
-                  (t) => !t.completed && t.status !== "cancelled"
+                  (t) => !t.completed && t.status !== "canceled"
                 ).length
               }
             </div>

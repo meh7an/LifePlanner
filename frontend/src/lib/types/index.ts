@@ -131,7 +131,7 @@ export interface Task {
     completed: boolean;
     newTask: boolean;
     priority: 'low' | 'medium' | 'high';
-    status: 'todo' | 'in_progress' | 'completed' | 'cancelled';
+    status: 'todo' | 'in_progress' | 'completed' | 'canceled';
     userId: string;
     boardId: string;
     listId?: string;
@@ -1046,7 +1046,7 @@ export const isApiError = (obj: unknown): obj is ApiError => {
 // =============================================================================
 
 export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const;
-export const TASK_STATUSES = ['todo', 'in_progress', 'completed', 'cancelled'] as const;
+export const TASK_STATUSES = ['todo', 'in_progress', 'completed', 'canceled'] as const;
 export const BOARD_TYPES = ['work', 'personal', 'project', 'other'] as const;
 export const EVENT_TYPES = ['meeting', 'task', 'reminder', 'personal', 'work', 'other'] as const;
 export const REPEAT_PERIODS = ['daily', 'weekly', 'monthly', 'yearly'] as const;

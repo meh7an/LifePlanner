@@ -278,7 +278,7 @@ const GlobalSearchSystem = () => {
             .then((res) => ({
               data: {
                 events:
-                  res.data?.events
+                  res.events
                     ?.filter((event) =>
                       event.eventType
                         .toLowerCase()

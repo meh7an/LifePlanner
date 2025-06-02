@@ -22,7 +22,7 @@ type TaskStep = {
 
 // Basic task priority levels  helps users focus on what's most important
 type Priority = "high" | "medium" | "low";
-type TaskStatus = "todo" | "in-progress" | "completed";
+type TaskStatus = "todo" | "in_progress" | "completed";
 
 // Main task structure ir represents all the info we need to track for each task
 type Task = {
