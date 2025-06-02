@@ -1,5 +1,5 @@
 // =============================================================================
-// 🔐 ZUSTAND AUTH STORE - lib/stores/authStore.ts (FIXED VERSION)
+// 🔐 ZUSTAND AUTH STORE
 // =============================================================================
 
 import { create } from 'zustand';
@@ -26,6 +26,7 @@ interface AuthState {
     user: UserWithStats | null;
     isAuthenticated: boolean;
     isInitialized: boolean;
+    isRehydrated: boolean; // NEW: Track rehydration status
 
     // Token data (now persisted)
     token: string | null;
@@ -58,6 +59,7 @@ interface AuthState {
     clearAuthData: () => void;
     initializeAuth: () => Promise<void>;
     setTokens: (token: string, refreshToken: string) => void;
+    setRehydrated: () => void; // NEW: Mark as rehydrated
 
     // Getters (computed values)
     hasPermission: (permission: string) => boolean;
@@ -79,6 +81,7 @@ export const useAuthStore = create<AuthState>()(
                 user: null,
                 isAuthenticated: false,
                 isInitialized: false,
+                isRehydrated: false, // NEW: Start as false
                 token: null,
                 refreshToken: null,
 
@@ -108,6 +111,12 @@ export const useAuthStore = create<AuthState>()(
                     apiClient.setRefreshToken(refreshToken);
                 },
 
+                setRehydrated: () => {
+                    set((state) => {
+                        state.isRehydrated = true;
+                    });
+                },
+
                 // =============================================================================
                 // 🔐 AUTHENTICATION ACTIONS
                 // =============================================================================
@@ -127,6 +136,7 @@ export const useAuthStore = create<AuthState>()(
                         set((state) => {
                             state.user = response.user as UserWithStats;
                             state.isAuthenticated = true;
+                            state.isInitialized = true; // Mark as initialized after successful login
                             state.loginLoading = false;
                             state.loginError = null;
                         });
@@ -164,6 +174,7 @@ export const useAuthStore = create<AuthState>()(
                         set((state) => {
                             state.user = response.user as UserWithStats;
                             state.isAuthenticated = true;
+                            state.isInitialized = true; // Mark as initialized after successful registration
                             state.registerLoading = false;
                             state.registerError = null;
                         });
@@ -214,9 +225,9 @@ export const useAuthStore = create<AuthState>()(
                     try {
                         const response = await apiClient.getCurrentUser();
 
-                        if (response.data) {
+                        if (response) {
                             set((state) => {
-                                state.user = response.data as UserWithStats;
+                                state.user = response;
                             });
                         }
                     } catch (error) {
@@ -357,7 +368,15 @@ export const useAuthStore = create<AuthState>()(
                 },
 
                 initializeAuth: async (): Promise<void> => {
+                    // Wait for rehydration to complete before initializing
+                    if (!get().isRehydrated) {
+                        console.log('⏳ Waiting for store rehydration...');
+                        return;
+                    }
+
                     const { token, refreshToken } = get();
+
+                    console.log('🔄 Initializing auth with tokens:', { hasToken: !!token, hasRefreshToken: !!refreshToken });
 
                     // If no tokens in store, mark as initialized and return
                     if (!token || !refreshToken) {
@@ -365,6 +384,7 @@ export const useAuthStore = create<AuthState>()(
                             state.isInitialized = true;
                             state.isAuthenticated = false;
                         });
+                        console.log('❌ No tokens found, marking as not authenticated');
                         return;
                     }
 
@@ -376,9 +396,9 @@ export const useAuthStore = create<AuthState>()(
                         // Try to get user data with persisted token
                         const response = await apiClient.getCurrentUser();
 
-                        if (response.data) {
+                        if (response) {
                             set((state) => {
-                                state.user = response.data as UserWithStats;
+                                state.user = response;
                                 state.isAuthenticated = true;
                                 state.isInitialized = true;
                             });
@@ -386,6 +406,7 @@ export const useAuthStore = create<AuthState>()(
                             console.log('🎉 Authentication restored from storage');
                         } else {
                             // No user data, clear auth
+                            console.log('❌ No user data received, clearing auth');
                             get().clearAuthData();
                         }
                     } catch (error) {
@@ -393,6 +414,7 @@ export const useAuthStore = create<AuthState>()(
 
                         // If 401, token is invalid - clear everything
                         if ((error as ApiError).statusCode === 401) {
+                            console.log('🔐 Token expired, clearing auth data');
                             get().clearAuthData();
                         } else {
                             // Other errors - still mark as initialized but not authenticated
@@ -420,6 +442,7 @@ export const useAuthStore = create<AuthState>()(
                 getUserInitials: (): string => {
                     const { user } = get();
                     if (!user) return '';
+                    console.log("user:", user);
 
                     const names = user.username.split(' ');
                     if (names.length >= 2) {
@@ -442,14 +465,17 @@ export const useAuthStore = create<AuthState>()(
                     token: state.token,
                     refreshToken: state.refreshToken,
                 }),
-                // Initialize auth after rehydration from storage
+                // FIXED: Synchronous rehydration handling
                 onRehydrateStorage: () => (state) => {
-                    console.log('🔄 Rehydrating auth store...');
+                    console.log('🔄 Auth store rehydrated');
                     if (state) {
-                        // Initialize auth with a small delay to ensure everything is ready
-                        setTimeout(() => {
-                            state.initializeAuth();
-                        }, 100);
+                        // Mark as rehydrated immediately
+                        state.setRehydrated();
+
+                        // Initialize auth synchronously after rehydration
+                        state.initializeAuth().catch((error) => {
+                            console.error('Failed to initialize auth:', error);
+                        });
                     }
                 },
             }
@@ -462,12 +488,13 @@ export const useAuthStore = create<AuthState>()(
 // 🪝 CUSTOM HOOKS FOR COMMON USE CASES
 // =============================================================================
 
-// Hook for auth status
+// Hook for auth status - IMPROVED with rehydration check
 export const useAuth = () => {
     const {
         user,
         isAuthenticated,
         isInitialized,
+        isRehydrated,
         login,
         register,
         logout,
@@ -477,7 +504,8 @@ export const useAuth = () => {
     return {
         user,
         isAuthenticated,
-        isInitialized,
+        isInitialized: isInitialized && isRehydrated, // Both must be true
+        isRehydrated,
         login,
         register,
         logout,
@@ -577,7 +605,7 @@ export const useUserStats = () => {
 
 export const selectUser = (state: AuthState) => state.user;
 export const selectIsAuthenticated = (state: AuthState) => state.isAuthenticated;
-export const selectIsInitialized = (state: AuthState) => state.isInitialized;
+export const selectIsInitialized = (state: AuthState) => state.isInitialized && state.isRehydrated;
 export const selectUserStats = (state: AuthState) => state.user?.stats;
 export const selectAuthLoading = (state: AuthState) => ({
     loginLoading: state.loginLoading,

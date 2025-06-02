@@ -229,9 +229,9 @@ class ApiClient {
         return response.data;
     }
 
-    async getCurrentUser(): Promise<ApiResponse<UserWithStats>> {
-        const response = await this.client.get<ApiResponse<UserWithStats>>('/auth/me');
-        return response.data;
+    async getCurrentUser(): Promise<UserWithStats> {
+        const response = await this.client.get<{ message: string, user: UserWithStats }>('/auth/me');
+        return response.data.user;
     }
 
     async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<User>> {
