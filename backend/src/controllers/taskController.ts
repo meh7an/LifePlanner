@@ -362,7 +362,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
             updateData.newTask = false;
 
             if (completed) {
-                updateData.status = 'done';
+                updateData.status = 'completed';
 
                 // 🎉 Celebrate task completion
                 await celebrateTaskCompletion(userId, existingTask.taskName, id);
@@ -407,8 +407,8 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
                         });
                     }
                 }
-            } else if (status !== 'done') {
-                updateData.status = existingTask.status === 'done' ? 'todo' : existingTask.status as TaskStatus;
+            } else if (status !== 'completed') {
+                updateData.status = existingTask.status === 'completed' ? 'todo' : existingTask.status as TaskStatus;
             }
         }
 

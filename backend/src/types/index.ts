@@ -104,7 +104,7 @@ export interface TaskWithDetails extends Task {
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'todo' | 'in_progress' | 'done';
+export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'canceled';
 
 // Task Step Types
 export interface TaskStep extends BaseEntity {

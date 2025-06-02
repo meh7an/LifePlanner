@@ -545,7 +545,7 @@ export const getViewTemplates = async (req: AuthenticatedRequest, res: Response)
                     sortBy: 'priority',
                     sortOrder: 'desc',
                     filters: {
-                        status: ['todo', 'in_progress', 'done']
+                        status: ['todo', 'in_progress', 'completed', 'canceled']
                     }
                 }
             },
@@ -807,7 +807,7 @@ async function getTemplateById(templateId: string): Promise<any> {
                 sortBy: 'priority',
                 sortOrder: 'desc',
                 filters: {
-                    status: ['todo', 'in_progress', 'done']
+                    status: ['todo', 'in_progress', 'completed', 'canceled']
                 }
             }
         },

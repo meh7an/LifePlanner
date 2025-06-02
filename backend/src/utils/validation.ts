@@ -159,7 +159,7 @@ export const updateTaskSchema = z.object({
         .enum(['low', 'medium', 'high'])
         .optional(),
     status: z
-        .enum(['todo', 'in_progress', 'done'])
+        .enum(['todo', 'in_progress', 'completed', 'canceled'])
         .optional(),
     listId: z
         .string()
