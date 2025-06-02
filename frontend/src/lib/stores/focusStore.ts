@@ -163,7 +163,7 @@ export const useFocusStore = create<FocusState>()(
 
                 set((state) => { state.endLoading = true; state.error = null; });
                 try {
-                    const response = await apiClient.endFocusSession(activeSession.sessionID, { completed });
+                    const response = await apiClient.endFocusSession(activeSession.id, { completed });
 
                     set((state) => {
                         if (state.timerInterval) {

@@ -114,11 +114,11 @@ const GlobalSearchSystem = () => {
     // Add tasks
     results.tasks.forEach((task) => {
       flattened.push({
-        id: task.taskID,
+        id: task.id,
         type: "task",
         title: task.taskName,
         description: task.description,
-        url: `/dashboard/tasks?task=${task.taskID}`,
+        url: `/dashboard/tasks?task=${task.id}`,
         icon: "✅",
         color: "text-blue-500",
         createdAt: task.createdAt,
@@ -133,11 +133,11 @@ const GlobalSearchSystem = () => {
     // Add boards
     results.boards.forEach((board) => {
       flattened.push({
-        id: board.boardID,
+        id: board.id,
         type: "board",
         title: board.name,
         description: `${board.type} board`,
-        url: `/dashboard/boards/${board.boardID}`,
+        url: `/dashboard/boards/${board.id}`,
         icon: "📋",
         color: "text-green-500",
         createdAt: board.createdAt,
@@ -148,11 +148,11 @@ const GlobalSearchSystem = () => {
     // Add events
     results.events.forEach((event) => {
       flattened.push({
-        id: event.eventID,
+        id: event.id,
         type: "event",
         title: `${event.eventType} Event`,
         description: `${new Date(event.startTime).toLocaleDateString()}`,
-        url: `/dashboard/calendar?event=${event.eventID}`,
+        url: `/dashboard/calendar?event=${event.id}`,
         icon: "📅",
         color: "text-purple-500",
         createdAt: event.createdAt,
@@ -163,28 +163,28 @@ const GlobalSearchSystem = () => {
     // Add notes
     results.notes.forEach((note) => {
       flattened.push({
-        id: note.noteID,
+        id: note.id,
         type: "note",
         title: "Note",
         description:
           note.content.substring(0, 100) +
           (note.content.length > 100 ? "..." : ""),
-        url: `/dashboard/tasks?note=${note.noteID}`,
+        url: `/dashboard/tasks?note=${note.id}`,
         icon: "📝",
         color: "text-yellow-500",
         createdAt: note.createdAt,
-        metadata: { taskId: note.taskID },
+        metadata: { taskId: note.taskId },
       });
     });
 
     // Add posts
     results.posts.forEach((post) => {
       flattened.push({
-        id: post.postID,
+        id: post.id,
         type: "post",
         title: post.title,
         description: post.description,
-        url: `/dashboard/posts/${post.postID}`,
+        url: `/dashboard/posts/${post.id}`,
         icon: "📄",
         color: "text-indigo-500",
         createdAt: post.createdAt,
@@ -195,11 +195,11 @@ const GlobalSearchSystem = () => {
     // Add memories
     results.memories.forEach((memory) => {
       flattened.push({
-        id: memory.memoryID,
+        id: memory.id,
         type: "memory",
         title: memory.post?.title || "Memory",
         description: memory.tags.join(", "),
-        url: `/dashboard/memories/${memory.memoryID}`,
+        url: `/dashboard/memories/${memory.id}`,
         icon: "💾",
         color: "text-pink-500",
         createdAt: memory.createdAt,
@@ -210,11 +210,11 @@ const GlobalSearchSystem = () => {
     // Add archives
     results.archives.forEach((archive) => {
       flattened.push({
-        id: archive.archiveID,
+        id: archive.id,
         type: "archive",
         title: archive.post?.title || "Archived Post",
         description: archive.category,
-        url: `/dashboard/archives/${archive.archiveID}`,
+        url: `/dashboard/archives/${archive.id}`,
         icon: "📦",
         color: "text-gray-500",
         createdAt: archive.archiveDate,
@@ -262,8 +262,8 @@ const GlobalSearchSystem = () => {
           apiClient.getBoards().then((res) => ({
             data: {
               boards:
-                res.data?.boards
-                  ?.filter((board) =>
+                res.boards
+                  ?.filter((board: Board) =>
                     board.name.toLowerCase().includes(searchQuery.toLowerCase())
                   )
                   .slice(0, 5) || [],
@@ -323,13 +323,13 @@ const GlobalSearchSystem = () => {
       } catch (error) {
         console.error("Search error:", error);
         addNotification({
-          notificationID: `system-${Date.now()}`,
+          id: `system-${Date.now()}`,
           type: "system_announcement",
           title: "Search Failed",
           message: "Unable to perform search. Please try again.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
       } finally {
         setIsLoading(false);
@@ -374,13 +374,13 @@ const GlobalSearchSystem = () => {
       setActiveIndex(0);
 
       addNotification({
-        notificationID: `system-${Date.now()}`,
+        id: `system-${Date.now()}`,
         type: "system_announcement",
         title: "Found it! 🎯",
         message: `Opening ${result.title}`,
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system",
+        userId: "system",
       });
     },
     [searchHistory, router, addNotification]
@@ -398,13 +398,13 @@ const GlobalSearchSystem = () => {
     localStorage.removeItem("search_history");
     localStorage.removeItem("recent_searches");
     addNotification({
-      notificationID: `system-${Date.now()}`,
+      id: `system-${Date.now()}`,
       type: "system_announcement",
       title: "Cleared! 🧹",
       message: "Search history has been cleared.",
       read: false,
       createdAt: new Date().toISOString(),
-      userID: "system",
+      userId: "system",
     });
   };
 

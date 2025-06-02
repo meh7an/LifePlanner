@@ -153,7 +153,7 @@ export const useCalendarStore = create<CalendarState>()(
                     const response = await apiClient.updateEvent(id, data);
                     if (response.data) {
                         set((state) => {
-                            const index = state.events.findIndex((e: CalendarEvent) => e.eventID === id);
+                            const index = state.events.findIndex((e: CalendarEvent) => e.id === id);
                             if (index !== -1) {
                                 state.events[index] = response.data;
                             }
@@ -179,7 +179,7 @@ export const useCalendarStore = create<CalendarState>()(
                 try {
                     await apiClient.deleteEvent(id);
                     set((state) => {
-                        state.events = state.events.filter((e: CalendarEvent) => e.eventID !== id);
+                        state.events = state.events.filter((e: CalendarEvent) => e.id !== id);
                         state.deleteLoading = false;
                     });
                     toast.success('Event deleted successfully! 🗑️');

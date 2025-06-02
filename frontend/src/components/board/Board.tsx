@@ -109,20 +109,20 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
 
     try {
       if (board) {
-        if (!board.boardID) {
+        if (!board.id) {
           setErrors({ general: "Board ID is required for updates." });
           return;
         }
-        const success = await updateBoard(board.boardID, formData);
+        const success = await updateBoard(board.id, formData);
         if (success) {
           addNotification({
-            notificationID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             type: "system_announcement",
             title: "Board Updated! 📋",
             message: "Your board has been updated successfully.",
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
           onClose();
         }
@@ -130,13 +130,13 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
         const success = await createBoard(formData);
         if (success) {
           addNotification({
-            notificationID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             type: "system_announcement",
             title: "Board Created! ✨",
             message: "Your new board is ready to organize your tasks.",
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
           onClose();
         }
@@ -162,16 +162,16 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
 
     setLoading(true);
     try {
-      const success = await deleteBoard(board.boardID);
+      const success = await deleteBoard(board.id);
       if (success) {
         addNotification({
-          notificationID: crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: "system_announcement",
           title: "Board Deleted! 🗑️",
           message: "The board has been removed from your workspace.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
         onClose();
       }
@@ -356,16 +356,16 @@ const ListModal: React.FC<ListModalProps> = ({
 
     try {
       if (list) {
-        const success = await updateList(list.listID, formData);
+        const success = await updateList(list.id, formData);
         if (success) {
           addNotification({
-            notificationID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             type: "system_announcement",
             title: "List Updated! 📝",
             message: "Your list has been updated successfully.",
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
           onClose();
         }
@@ -373,13 +373,13 @@ const ListModal: React.FC<ListModalProps> = ({
         const success = await createList(boardId, formData);
         if (success) {
           addNotification({
-            notificationID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             type: "system_announcement",
             title: "List Created! ✨",
             message: "Your new list is ready for tasks.",
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
           onClose();
         }
@@ -405,16 +405,16 @@ const ListModal: React.FC<ListModalProps> = ({
 
     setLoading(true);
     try {
-      const success = await deleteList(list.listID);
+      const success = await deleteList(list.id);
       if (success) {
         addNotification({
-          notificationID: crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: "system_announcement",
           title: "List Deleted! 🗑️",
           message: "The list has been removed from your board.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
         onClose();
       }
@@ -544,7 +544,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     : false;
 
   const handleStatusChange = (newStatus: Task["status"]) => {
-    onStatusChange(task.taskID, newStatus);
+    onStatusChange(task.id, newStatus);
   };
 
   return (
@@ -580,7 +580,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(task.taskID);
+                onDelete(task.id);
               }}
               className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 transition-colors"
             >
@@ -795,7 +795,7 @@ const BoardList: React.FC<BoardListProps> = ({
       <div className="space-y-3 mb-4 flex-1">
         {tasks.map((task) => (
           <TaskCard
-            key={task.taskID}
+            key={task.id}
             task={task}
             onEdit={onEditTask}
             onDelete={onDeleteTask}
@@ -826,7 +826,7 @@ const BoardList: React.FC<BoardListProps> = ({
 
       {/* Add Task Button */}
       <button
-        onClick={() => onAddTask(list.listID)}
+        onClick={() => onAddTask(list.id)}
         className="w-full p-3 border-2 border-dashed border-green-300 dark:border-green-700 rounded-lg text-green-600 dark:text-green-400 hover:border-green-400 dark:hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all flex items-center justify-center space-x-2"
       >
         <svg
@@ -871,17 +871,16 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
 
   useEffect(() => {
     // Fetch the full board details (including lists) when component mounts
-    fetchBoard(board.boardID);
-  }, [board.boardID, fetchBoard]);
+    fetchBoard(board.id);
+  }, [board.id, fetchBoard]);
 
   // Use selectedBoard from store (which has full details including lists)
-  const currentBoard =
-    selectedBoard?.boardID === board.boardID ? selectedBoard : board;
+  const currentBoard = selectedBoard?.id === board.id ? selectedBoard : board;
   const boardLists = currentBoard.lists || [];
-  const boardTasks = tasks.filter((task) => task.boardID === board.boardID);
+  const boardTasks = tasks.filter((task) => task.boardId === board.id);
 
   const getTasksForList = (listId: string) => {
-    return boardTasks.filter((task) => task.listID === listId);
+    return boardTasks.filter((task) => task.listId === listId);
   };
 
   // List handlers
@@ -905,7 +904,7 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
 
   const handleEditTask = (task: Task) => {
     // Open task modal for editing
-    console.log("Editing task:", task.taskID);
+    console.log("Editing task:", task.id);
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -913,13 +912,13 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
       const success = await deleteTask(taskId);
       if (success) {
         addNotification({
-          notificationID: crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: "system_announcement",
           title: "Task Deleted! 🗑️",
           message: "The task has been removed successfully.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
       }
     }
@@ -935,13 +934,13 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
     });
     if (success) {
       addNotification({
-        notificationID: crypto.randomUUID(),
+        id: crypto.randomUUID(),
         type: status === "completed" ? "task_completed" : "system_announcement",
         title: status === "completed" ? "Task Completed! ✅" : "Status Updated",
         message: `Task status changed to ${status.replace("_", " ")}`,
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system",
+        userId: "system",
       });
     }
   };
@@ -1043,9 +1042,9 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
       <div className="flex space-x-6 overflow-x-auto pb-6">
         {boardLists.map((list) => (
           <BoardList
-            key={list.listID}
+            key={list.id}
             list={list}
-            tasks={getTasksForList(list.listID)}
+            tasks={getTasksForList(list.id)}
             onAddTask={handleCreateTask}
             onEditList={handleEditList}
             onEditTask={handleEditTask}
@@ -1101,7 +1100,7 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
       <ListModal
         isOpen={listModal.isOpen}
         onClose={closeListModal}
-        boardId={board.boardID}
+        boardId={board.id}
         list={listModal.list}
       />
     </div>
@@ -1170,7 +1169,7 @@ const BoardsGrid: React.FC<BoardsGridProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {boards.map((board) => (
             <div
-              key={board.boardID}
+              key={board.id}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6 hover:shadow-lg transition-all cursor-pointer group"
               onClick={() => onSelectBoard(board)}
             >
@@ -1211,7 +1210,7 @@ const BoardsGrid: React.FC<BoardsGridProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteBoard(board.boardID, board.name); // Fixed: now passes both boardId and boardName
+                      onDeleteBoard(board.id, board.name); // Fixed: now passes both boardId and boardName
                     }}
                     className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
                     title="Delete board"
@@ -1392,17 +1391,17 @@ const BoardManagement: React.FC<BoardManagementProps> = ({
       const success = await deleteBoard(boardId);
       if (success) {
         addNotification({
-          notificationID: crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: "system_announcement",
           title: "Board Deleted! 🗑️",
           message: `"${boardName}" and all its contents have been removed.`,
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
 
         // If we're currently viewing the deleted board, go back to boards list
-        if (selectedBoard?.boardID === boardId) {
+        if (selectedBoard?.id === boardId) {
           setSelectedBoard(null);
         }
       }

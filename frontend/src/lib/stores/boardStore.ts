@@ -79,7 +79,7 @@ export const useBoardStore = create<BoardState>()(
                 set((state) => { state.createLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.createBoard(data);
-                    if (response.boardID) {
+                    if (response.id) {
                         set((state) => {
                             state.boards.unshift(response);
                             state.createLoading = false;
@@ -105,11 +105,11 @@ export const useBoardStore = create<BoardState>()(
                     const response = await apiClient.updateBoard(id, data);
                     if (response.data) {
                         set((state) => {
-                            const index = state.boards.findIndex((b: Board) => b.boardID === id);
+                            const index = state.boards.findIndex((b: Board) => b.id === id);
                             if (index !== -1 && response.data) {
                                 state.boards[index] = response.data;
                             }
-                            if (state.selectedBoard?.boardID === id) {
+                            if (state.selectedBoard?.id === id) {
                                 state.selectedBoard = response.data ?? null;
                             }
                             state.updateLoading = false;
@@ -135,14 +135,14 @@ export const useBoardStore = create<BoardState>()(
                     await apiClient.deleteBoard(id, permanent);
                     set((state) => {
                         if (permanent) {
-                            state.boards = state.boards.filter((b: Board) => b.boardID !== id);
+                            state.boards = state.boards.filter((b: Board) => b.id !== id);
                         } else {
-                            const index = state.boards.findIndex((b: Board) => b.boardID === id);
+                            const index = state.boards.findIndex((b: Board) => b.id === id);
                             if (index !== -1) {
                                 state.boards[index].isArchived = true;
                             }
                         }
-                        if (state.selectedBoard?.boardID === id && permanent) {
+                        if (state.selectedBoard?.id === id && permanent) {
                             state.selectedBoard = null;
                         }
                         state.deleteLoading = false;
@@ -166,7 +166,7 @@ export const useBoardStore = create<BoardState>()(
                     if (response) {
                         set((state) => {
                             // Add to selected board if it matches
-                            if (state.selectedBoard?.boardID === boardId) {
+                            if (state.selectedBoard?.id === boardId) {
                                 if (!state.selectedBoard.lists) {
                                     state.selectedBoard.lists = [];
                                 }
@@ -176,7 +176,7 @@ export const useBoardStore = create<BoardState>()(
                             }
 
                             // Update board in boards array
-                            const boardIndex = state.boards.findIndex((b: Board) => b.boardID === boardId);
+                            const boardIndex = state.boards.findIndex((b: Board) => b.id === boardId);
                             if (boardIndex !== -1) {
                                 if (!state.boards[boardIndex].lists) {
                                     state.boards[boardIndex].lists = [];
@@ -202,7 +202,7 @@ export const useBoardStore = create<BoardState>()(
                         set((state) => {
                             // Update in selected board
                             if (state.selectedBoard?.lists) {
-                                const listIndex = state.selectedBoard.lists.findIndex((l: List) => l.listID === id);
+                                const listIndex = state.selectedBoard.lists.findIndex((l: List) => l.id === id);
                                 if (listIndex !== -1) {
                                     state.selectedBoard.lists[listIndex] = response;
                                 }
@@ -211,7 +211,7 @@ export const useBoardStore = create<BoardState>()(
                             // Update in boards array
                             state.boards.forEach((board: Board) => {
                                 if (board.lists) {
-                                    const listIndex: number = board.lists.findIndex((l: List) => l.listID === id);
+                                    const listIndex: number = board.lists.findIndex((l: List) => l.id === id);
                                     if (listIndex !== -1 && response) {
                                         board.lists[listIndex] = response;
                                     }
@@ -235,13 +235,13 @@ export const useBoardStore = create<BoardState>()(
                     set((state) => {
                         // Remove from selected board
                         if (state.selectedBoard?.lists) {
-                            state.selectedBoard.lists = state.selectedBoard.lists.filter((l: List) => l.listID !== id);
+                            state.selectedBoard.lists = state.selectedBoard.lists.filter((l: List) => l.id !== id);
                         }
 
                         // Remove from boards array
                         state.boards.forEach((board: Board) => {
                             if (board.lists) {
-                                board.lists = board.lists.filter((l: List) => l.listID !== id);
+                                board.lists = board.lists.filter((l: List) => l.id !== id);
                             }
                         });
                     });

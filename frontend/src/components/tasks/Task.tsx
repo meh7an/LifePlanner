@@ -96,8 +96,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
         ? format(parseISO(task.dueTime), "yyyy-MM-dd'T'HH:mm")
         : "",
       priority: task?.priority || "medium",
-      boardId: task?.boardID || defaultBoardId || "",
-      listId: task?.listID || defaultListId || "",
+      boardId: task?.boardId || defaultBoardId || "",
+      listId: task?.listId || defaultListId || "",
     },
   });
 
@@ -106,7 +106,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
   // Update selected board when boardId changes
   useEffect(() => {
     if (watchedBoardId) {
-      const board = boards.find((b) => b.boardID === watchedBoardId);
+      const board = boards.find((b) => b.id === watchedBoardId);
       setSelectedBoard(board || null);
     }
   }, [watchedBoardId, boards]);
@@ -122,8 +122,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
             ? format(parseISO(task.dueTime), "yyyy-MM-dd'T'HH:mm")
             : "",
           priority: task.priority,
-          boardId: task.boardID,
-          listId: task.listID || "",
+          boardId: task.boardId,
+          listId: task.listId || "",
         });
       } else {
         reset({
@@ -142,12 +142,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
     try {
       if (task) {
         // Update existing task
-        const success = await updateTask(task.taskID, {
+        const success = await updateTask(task.id, {
           taskName: data.taskName,
           description: data.description || undefined,
           dueTime: data.dueTime || undefined,
           priority: data.priority,
-          listID: data.listId || undefined, // Fixed: should be listID
+          listId: data.listId || undefined,
         });
         if (success) {
           onClose();
@@ -159,8 +159,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
           description: data.description || undefined,
           dueTime: data.dueTime || undefined,
           priority: data.priority,
-          boardID: data.boardId, // Fixed: should be boardID
-          listID: data.listId || undefined, // Fixed: should be listID
+          boardId: data.boardId,
+          listId: data.listId || undefined,
         });
         if (success) {
           onClose();
@@ -240,7 +240,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
               >
                 <option value="">Select a board</option>
                 {boards.map((board) => (
-                  <option key={board.boardID} value={board.boardID}>
+                  <option key={board.id} value={board.id}>
                     {board.name}
                   </option>
                 ))}
@@ -264,7 +264,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
               >
                 <option value="">No specific list</option>
                 {selectedBoard?.lists?.map((list) => (
-                  <option key={list.listID} value={list.listID}>
+                  <option key={list.id} value={list.id}>
                     {list.name}
                   </option>
                 ))}
@@ -457,7 +457,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               >
                 <option value="">All Boards</option>
                 {boards.map((board) => (
-                  <option key={board.boardID} value={board.boardID}>
+                  <option key={board.id} value={board.id}>
                     {board.name}
                   </option>
                 ))}
@@ -563,7 +563,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <div className="flex items-center space-x-3">
           {/* Completion Checkbox */}
           <button
-            onClick={() => toggleTaskComplete(task.taskID)}
+            onClick={() => toggleTaskComplete(task.id)}
             className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
               task.completed
                 ? "bg-green-500 border-green-500"
@@ -673,7 +673,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    onDelete(task.taskID);
+                    onDelete(task.id);
                     setShowMenu(false);
                   }}
                   className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-2"
@@ -694,7 +694,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <button
-          onClick={() => toggleTaskComplete(task.taskID)}
+          onClick={() => toggleTaskComplete(task.id)}
           className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
             task.completed
               ? "bg-green-500 border-green-500"
@@ -740,7 +740,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </button>
               <button
                 onClick={() => {
-                  onDelete(task.taskID);
+                  onDelete(task.id);
                   setShowMenu(false);
                 }}
                 className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-2"
@@ -1051,7 +1051,7 @@ const TaskList: React.FC = () => {
           >
             {tasks.map((task) => (
               <TaskCard
-                key={task.taskID}
+                key={task.id}
                 task={task}
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
@@ -1160,16 +1160,16 @@ const TaskBoard: React.FC = () => {
           </div>
           <div className="flex items-center space-x-4">
             <select
-              value={selectedBoard?.boardID || ""}
+              value={selectedBoard?.id || ""}
               onChange={(e) => {
-                const board = boards.find((b) => b.boardID === e.target.value);
+                const board = boards.find((b) => b.id === e.target.value);
                 setSelectedBoard(board || null);
               }}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="">All Boards</option>
               {boards.map((board) => (
-                <option key={board.boardID} value={board.boardID}>
+                <option key={board.id} value={board.id}>
                   {board.name}
                 </option>
               ))}
@@ -1227,11 +1227,11 @@ const TaskBoard: React.FC = () => {
                 {tasksByStatus[column.key as keyof typeof tasksByStatus].map(
                   (task) => (
                     <div
-                      key={task.taskID}
+                      key={task.id}
                       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-move"
                       draggable
                       onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", task.taskID);
+                        e.dataTransfer.setData("text/plain", task.id);
                       }}
                     >
                       <h4 className="font-medium text-gray-900 dark:text-white mb-2">

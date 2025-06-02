@@ -92,7 +92,7 @@ export const useUIStore = create<UIState>()(
             }),
 
             removeNotification: (id) => set((state) => {
-                state.notifications = state.notifications.filter((n: Notification) => n.notificationID !== id);
+                state.notifications = state.notifications.filter((n: Notification) => n.id !== id);
             }),
 
             clearNotifications: () => set((state) => { state.notifications = []; }),

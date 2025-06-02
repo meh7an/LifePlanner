@@ -57,25 +57,25 @@ const UserProfilePage = () => {
       const success = await updateProfile(profileData);
       if (success) {
         addNotification({
-          notificationID: Math.random().toString(36).substr(2, 9),
+          id: Math.random().toString(36).substr(2, 9),
           type: "system_announcement",
           title: "Profile Updated! 🎉",
           message: "Your profile information has been successfully updated.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: user?.userID ?? "system",
+          userId: user?.id ?? "system",
         });
       }
     } catch (error) {
       console.error("Profile update failed:", error);
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "Update Failed",
         message: "Failed to update profile. Please try again.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
     } finally {
       setIsSubmitting(false);
@@ -87,26 +87,26 @@ const UserProfilePage = () => {
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "Password Mismatch",
         message: "New password and confirmation do not match.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "Weak Password",
         message: "Password must be at least 8 characters long.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
       return;
     }
@@ -121,13 +121,13 @@ const UserProfilePage = () => {
 
       if (success) {
         addNotification({
-          notificationID: Math.random().toString(36).substr(2, 9),
+          id: Math.random().toString(36).substr(2, 9),
           type: "system_announcement",
           title: "Password Changed! 🔒",
           message: "Your password has been successfully updated.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: user?.userID ?? "system",
+          userId: user?.id ?? "system",
         });
         setPasswordData({
           currentPassword: "",
@@ -138,14 +138,14 @@ const UserProfilePage = () => {
     } catch (error) {
       console.error("Password change failed:", error);
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "Password Change Failed",
         message:
           "Failed to change password. Please check your current password.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
     } finally {
       setIsSubmitting(false);
@@ -159,13 +159,13 @@ const UserProfilePage = () => {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "Invalid File Type",
         message: "Please select an image file.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
       return;
     }
@@ -173,13 +173,13 @@ const UserProfilePage = () => {
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "File Too Large",
         message: "Image must be smaller than 5MB.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
       return;
     }
@@ -196,26 +196,26 @@ const UserProfilePage = () => {
       const success = await uploadAvatar(file);
       if (success) {
         addNotification({
-          notificationID: Math.random().toString(36).substr(2, 9),
+          id: Math.random().toString(36).substr(2, 9),
           type: "system_announcement",
           title: "Avatar Updated! 📸",
           message: "Your profile picture has been successfully updated.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: user?.userID ?? "system",
+          userId: user?.id ?? "system",
         });
         setAvatarPreview(null);
       }
     } catch (error) {
       console.error("Avatar upload failed:", error);
       addNotification({
-        notificationID: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9),
         type: "system_announcement",
         title: "Upload Failed",
         message: "Failed to upload avatar. Please try again.",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: user?.userID ?? "system",
+        userId: user?.id ?? "system",
       });
       setAvatarPreview(null);
     }
@@ -829,7 +829,7 @@ const UserProfilePage = () => {
                               User ID
                             </label>
                             <p className="text-gray-600 dark:text-gray-400 font-mono text-sm">
-                              {user?.userID}
+                              {user?.id}
                             </p>
                           </div>
                         </div>

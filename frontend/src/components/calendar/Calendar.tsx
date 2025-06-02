@@ -101,7 +101,7 @@ const EventModal: React.FC<EventModalProps> = ({
       ? formatISO(addDays(selectedDate, 0))
       : formatISO(new Date()),
     eventType: "meeting",
-    calendarID: calendarId || calendars[0]?.calendarID || "",
+    calendarId: calendarId || calendars[0]?.id || "",
     alarm: false,
     reminder: 15,
   });
@@ -115,10 +115,10 @@ const EventModal: React.FC<EventModalProps> = ({
         startTime: event.startTime,
         endTime: event.endTime,
         eventType: event.eventType,
-        calendarID: event.calendarID,
+        calendarId: event.calendarId,
         alarm: event.alarm || false,
         reminder: event.reminder || 15,
-        taskID: event.taskID || undefined,
+        taskId: event.taskId || undefined,
       });
     } else if (selectedDate) {
       const startTime = setHours(setMinutes(selectedDate, 0), 9);
@@ -138,16 +138,16 @@ const EventModal: React.FC<EventModalProps> = ({
 
     try {
       if (event) {
-        const success = await updateEvent(event.eventID, formData);
+        const success = await updateEvent(event.id, formData);
         if (success) {
           addNotification({
-            notificationID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             type: "system_announcement",
             title: "Event Updated! 🎉",
             message: "Your event has been updated successfully.",
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
           onClose();
         }
@@ -155,13 +155,13 @@ const EventModal: React.FC<EventModalProps> = ({
         const success = await createEvent(formData);
         if (success) {
           addNotification({
-            notificationID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             type: "system_announcement",
             title: "Event Created! ✨",
             message: "Your new event has been added to the calendar.",
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
           onClose();
         }
@@ -179,16 +179,16 @@ const EventModal: React.FC<EventModalProps> = ({
 
     setLoading(true);
     try {
-      const success = await deleteEvent(event.eventID);
+      const success = await deleteEvent(event.id);
       if (success) {
         addNotification({
-          notificationID: crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: "system_announcement",
           title: "Event Deleted! 🗑️",
           message: "The event has been removed from your calendar.",
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
         onClose();
       }
@@ -271,14 +271,14 @@ const EventModal: React.FC<EventModalProps> = ({
               Calendar
             </label>
             <select
-              value={formData.calendarID}
+              value={formData.calendarId}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, calendarId: e.target.value }))
               }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
             >
               {calendars.map((calendar) => (
-                <option key={calendar.calendarID} value={calendar.calendarID}>
+                <option key={calendar.id} value={calendar.id}>
                   {calendar.name}
                 </option>
               ))}
@@ -330,7 +330,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 Link to Task (Optional)
               </label>
               <select
-                value={formData.taskID || ""}
+                value={formData.taskId || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -341,7 +341,7 @@ const EventModal: React.FC<EventModalProps> = ({
               >
                 <option value="">No task linked</option>
                 {tasks.map((task) => (
-                  <option key={task.taskID} value={task.taskID}>
+                  <option key={task.id} value={task.id}>
                     {task.taskName}
                   </option>
                 ))}
@@ -524,7 +524,7 @@ const MonthView: React.FC<MonthViewProps> = ({
               <div className="space-y-1">
                 {dayEvents.slice(0, 3).map((event) => (
                   <div
-                    key={event.eventID}
+                    key={event.id}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEventClick(event);
@@ -653,7 +653,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                 >
                   {hourEvents.map((event) => (
                     <div
-                      key={event.eventID}
+                      key={event.id}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEventClick(event);
@@ -749,7 +749,7 @@ const DayView: React.FC<DayViewProps> = ({
               >
                 {hourEvents.map((event) => (
                   <div
-                    key={event.eventID}
+                    key={event.id}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEventClick(event);
@@ -1080,7 +1080,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ className = "" }) => {
         onClose={closeEventModal}
         event={eventModal.event}
         selectedDate={eventModal.selectedDate || undefined}
-        calendarId={calendars[0]?.calendarID}
+        calendarId={calendars[0]?.id}
       />
     </div>
   );
@@ -1318,7 +1318,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
 
           return (
             <div
-              key={event.eventID}
+              key={event.id}
               onClick={() => onEventClick?.(event)}
               className="flex items-start space-x-3 p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors cursor-pointer"
             >

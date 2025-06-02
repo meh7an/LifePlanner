@@ -41,191 +41,10 @@ type Task = {
   estimatedTime: number; // how long we think this will take (in minutes)
 };
 
-// Sample tasks to demonstrate the system - in a real app, these would come from your database
-const mockTasks: Task[] = [
-  {
-    id: 1,
-    name: "Finish Lab Report",
-    description: "Complete the database design lab report with ER diagrams",
-    priority: "high",
-    status: "in-progress",
-    dueDate: "2025-05-30",
-    boardName: "University",
-    listName: "Assignments",
-    hasNotes: true,
-    isRecurring: false,
-    completedSteps: 2,
-    totalSteps: 5,
-    estimatedTime: 120,
-  },
-  {
-    id: 2,
-    name: "Review slides for midterm exam",
-    description: "Review lecture slides for midterm exam preparation",
-    priority: "medium",
-    status: "todo",
-    dueDate: "2025-05-31",
-    boardName: "University",
-    listName: "Study",
-    hasNotes: false,
-    isRecurring: false,
-    completedSteps: 0,
-    totalSteps: 3,
-    estimatedTime: 60,
-  },
-  {
-    id: 3,
-    name: "Submit assignment",
-    description: "Upload the completed project to LMS",
-    priority: "high",
-    status: "completed",
-    dueDate: "2025-05-28",
-    boardName: "University",
-    listName: "Assignments",
-    hasNotes: false,
-    isRecurring: false,
-    completedSteps: 1,
-    totalSteps: 1,
-    estimatedTime: 15,
-  },
-  {
-    id: 4,
-    name: "Weekly Planning",
-    description: "Plan tasks and goals for the upcoming week",
-    priority: "medium",
-    status: "todo",
-    dueDate: null,
-    boardName: "Personal",
-    listName: "Routine",
-    hasNotes: true,
-    isRecurring: true,
-    completedSteps: 0,
-    totalSteps: 1,
-    estimatedTime: 30,
-  },
-  {
-    id: 5,
-    name: "Update Portfolio",
-    description: "Add recent projects to personal portfolio website",
-    priority: "low",
-    status: "todo",
-    dueDate: "2025-06-15",
-    boardName: "Personal",
-    listName: "Projects",
-    hasNotes: false,
-    isRecurring: false,
-    completedSteps: 1,
-    totalSteps: 4,
-    estimatedTime: 180,
-  },
-];
-
-// Sample task steps - these show how bigger tasks can be broken down into smaller, actionable pieces
-const mockTaskSteps: TaskStep[] = [
-  // Breaking down the lab report into manageable chunks
-  {
-    id: 1,
-    taskId: 1,
-    description: "Create ER diagram",
-    completed: true,
-    orderIndex: 1,
-  },
-  {
-    id: 2,
-    taskId: 1,
-    description: "Write database schema",
-    completed: true,
-    orderIndex: 2,
-  },
-  {
-    id: 3,
-    taskId: 1,
-    description: "Add sample data",
-    completed: false,
-    orderIndex: 3,
-  },
-  {
-    id: 4,
-    taskId: 1,
-    description: "Write analysis section",
-    completed: false,
-    orderIndex: 4,
-  },
-  {
-    id: 5,
-    taskId: 1,
-    description: "Final review and formatting",
-    completed: false,
-    orderIndex: 5,
-  },
-
-  // Study sessions broken down by time periods
-  {
-    id: 6,
-    taskId: 2,
-    description: "Review Week 1-4 slides",
-    completed: false,
-    orderIndex: 1,
-  },
-  {
-    id: 7,
-    taskId: 2,
-    description: "Review Week 5-8 slides",
-    completed: false,
-    orderIndex: 2,
-  },
-  {
-    id: 8,
-    taskId: 2,
-    description: "Make summary notes",
-    completed: false,
-    orderIndex: 3,
-  },
-
-  // Simple one-step task
-  {
-    id: 9,
-    taskId: 3,
-    description: "Upload to LMS",
-    completed: true,
-    orderIndex: 1,
-  },
-
-  // Portfolio update with multiple components
-  {
-    id: 10,
-    taskId: 5,
-    description: "Update project descriptions",
-    completed: true,
-    orderIndex: 1,
-  },
-  {
-    id: 11,
-    taskId: 5,
-    description: "Add new screenshots",
-    completed: false,
-    orderIndex: 2,
-  },
-  {
-    id: 12,
-    taskId: 5,
-    description: "Update skills section",
-    completed: false,
-    orderIndex: 3,
-  },
-  {
-    id: 13,
-    taskId: 5,
-    description: "Test responsive design",
-    completed: false,
-    orderIndex: 4,
-  },
-];
-
 export default function TasksPanel() {
   // State management for all the interactive features
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [taskSteps, setTaskSteps] = useState<TaskStep[]>(mockTaskSteps);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskSteps, setTaskSteps] = useState<TaskStep[]>([]);
   const [filter, setFilter] = useState<
     "all" | "today" | "overdue" | "completed"
   >("all");
@@ -371,7 +190,11 @@ export default function TasksPanel() {
 
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
+              onChange={(e) =>
+                setFilter(
+                  e.target.value as "all" | "today" | "overdue" | "completed"
+                )
+              }
               className="text-xs bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-gray-700 dark:text-gray-300 font-medium min-w-0"
             >
               <option value="all">All Tasks</option>
@@ -635,8 +458,8 @@ function CreateTaskModal({ onClose }: { onClose: () => void }) {
     description: "",
     priority: "medium" as Priority,
     dueDate: "",
-    board: "University",
-    list: "Assignments",
+    board: "",
+    list: "",
     estimatedTime: 60,
   });
 

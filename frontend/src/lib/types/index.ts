@@ -7,7 +7,7 @@
 // =============================================================================
 
 export interface User {
-    userID: string;
+    id: string;
     username: string;
     email: string;
     profilePicture?: string;
@@ -69,12 +69,12 @@ export interface UserWithStats extends User {
 // =============================================================================
 
 export interface Board {
-    boardID: string;
+    id: string;
     name: string;
     type: 'work' | 'personal' | 'project' | 'other';
     createdAt: string;
     isArchived: boolean;
-    userID: string;
+    userId: string;
     lists?: List[];
     tasksCount?: number;
     completedTasksCount?: number;
@@ -82,10 +82,10 @@ export interface Board {
 }
 
 export interface List {
-    listID: string;
+    id: string;
     name: string;
     orderIndex: number;
-    boardID: string;
+    boardId: string;
     tasks?: Task[];
     tasksCount?: number;
 }
@@ -124,7 +124,7 @@ export interface UpdateListRequest {
 // =============================================================================
 
 export interface Task {
-    taskID: string;
+    id: string;
     taskName: string;
     description?: string;
     dueTime?: string;
@@ -132,9 +132,9 @@ export interface Task {
     newTask: boolean;
     priority: 'low' | 'medium' | 'high';
     status: 'todo' | 'in_progress' | 'completed' | 'cancelled';
-    userID: string;
-    boardID: string;
-    listID?: string;
+    userId: string;
+    boardId: string;
+    listId?: string;
     createdAt: string;
     updatedAt: string;
     board?: Board;
@@ -149,11 +149,11 @@ export interface Task {
 }
 
 export interface TaskStep {
-    stepID: string;
+    stepId: string;
     description: string;
     completed: boolean;
     orderIndex: number;
-    taskID: string;
+    taskId: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -163,8 +163,8 @@ export interface CreateTaskRequest {
     description?: string;
     dueTime?: string;
     priority?: Task['priority'];
-    boardID: string;
-    listID?: string;
+    boardId: string;
+    listId?: string;
 }
 
 export interface UpdateTaskRequest {
@@ -174,7 +174,7 @@ export interface UpdateTaskRequest {
     completed?: boolean;
     priority?: Task['priority'];
     status?: Task['status'];
-    listID?: string;
+    listId?: string;
 }
 
 export interface CreateTaskStepRequest {
@@ -216,11 +216,11 @@ export interface TodayTasksOverview {
 // =============================================================================
 
 export interface Calendar {
-    calendarID: string;
+    id: string;
     name: string;
     startDate?: string;
     endDate?: string;
-    userID: string;
+    userId: string;
     createdAt: string;
     updatedAt: string;
     events?: CalendarEvent[];
@@ -228,14 +228,14 @@ export interface Calendar {
 }
 
 export interface CalendarEvent {
-    eventID: string;
+    id: string;
     startTime: string;
     endTime: string;
     eventType: 'meeting' | 'task' | 'reminder' | 'personal' | 'work' | 'other';
     alarm?: boolean;
     reminder?: number; // minutes before
-    calendarID: string;
-    taskID?: string;
+    calendarId: string;
+    taskId?: string;
     createdAt: string;
     updatedAt: string;
     calendar?: Calendar;
@@ -260,8 +260,8 @@ export interface CreateEventRequest {
     eventType: CalendarEvent['eventType'];
     alarm?: boolean;
     reminder?: number;
-    calendarID: string;
-    taskID?: string;
+    calendarId: string;
+    taskId?: string;
 }
 
 export interface UpdateEventRequest {
@@ -270,7 +270,7 @@ export interface UpdateEventRequest {
     eventType?: CalendarEvent['eventType'];
     alarm?: boolean;
     reminder?: number;
-    taskID?: string;
+    taskId?: string;
 }
 
 export interface CalendarFilters {
@@ -301,13 +301,13 @@ export interface CalendarView {
 // =============================================================================
 
 export interface FocusSession {
-    sessionID: string;
+    id: string;
     startTime: string;
     endTime?: string;
     durationMinutes: number;
     completed: boolean;
-    userID: string;
-    taskID?: string;
+    userId: string;
+    taskId?: string;
     createdAt: string;
     updatedAt: string;
     task?: Task;
@@ -316,7 +316,7 @@ export interface FocusSession {
 }
 
 export interface StartFocusRequest {
-    taskID?: string;
+    taskId?: string;
 }
 
 export interface EndFocusRequest {
@@ -358,11 +358,11 @@ export interface FocusTodaySummary {
 // =============================================================================
 
 export interface Note {
-    noteID: string;
+    id: string;
     content: string;
     createdAt: string;
     modifiedAt: string;
-    taskID: string;
+    taskId: string;
     task?: Task;
 }
 
@@ -397,13 +397,13 @@ export interface NoteStats {
 // =============================================================================
 
 export interface Post {
-    postID: string;
+    id: string;
     title: string;
     description?: string;
     privacySetting: 'public' | 'private';
     createdAt: string;
     modifiedAt: string;
-    userID: string;
+    userId: string;
     memory?: Memory;
     archive?: Archive;
     hasMemory?: boolean;
@@ -411,18 +411,18 @@ export interface Post {
 }
 
 export interface Memory {
-    memoryID: string;
+    id: string;
     createdAt: string;
     tags: string[];
-    postID: string;
+    postId: string;
     post?: Post;
 }
 
 export interface Archive {
-    archiveID: string;
+    id: string;
     archiveDate: string;
     category: string;
-    postID: string;
+    postId: string;
     post?: Post;
 }
 
@@ -459,13 +459,13 @@ export interface UpdateArchiveRequest {
 // =============================================================================
 
 export interface Repeat {
-    repeatID: string;
+    id: string;
     periodType: 'daily' | 'weekly' | 'monthly' | 'yearly';
     periodValue?: number;
     repeatDays?: string[]; // e.g., ['monday', 'wednesday', 'friday']
     endDate?: string;
     infiniteRepeat: boolean;
-    taskID: string;
+    taskId: string;
     createdAt: string;
     updatedAt: string;
     task?: Task;
@@ -488,12 +488,12 @@ export interface UpdateRepeatRequest {
 }
 
 export interface Streak {
-    streakID: string;
+    id: string;
     currentCount: number;
     lastUpdate: string;
     streakType: 'daily_tasks' | 'focus_sessions' | 'calendar_events' | 'custom';
     longestStreak: number;
-    userID: string;
+    userId: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -586,13 +586,13 @@ export type ViewPreferences =
     | CustomViewPreferences;
 
 export interface View {
-    viewID: string;
+    id: string;
     viewType: 'dashboard' | 'tasks_board' | 'tasks_list' | 'calendar_month' | 'calendar_week' | 'focus_mode' | 'analytics' | 'custom';
     name?: string;
     description?: string;
     defaultStatus: boolean;
     viewPreferences: ViewPreferences;
-    userID: string;
+    userId: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -626,13 +626,13 @@ export interface ViewTemplate {
 // =============================================================================
 
 export interface Share {
-    shareID: string;
+    id: string;
     resourceType: 'task' | 'board' | 'calendar';
-    resourceID: string;
+    resourceId: string;
     permissionLevel: 'read' | 'write' | 'admin';
     sharingTimestamp: string;
-    ownerUserID: string;
-    sharedWithUserID: string;
+    ownerUserId: string;
+    sharedWithUserId: string;
     ownerUser?: User;
     sharedWithUser?: User;
     resource?: Task | Board | Calendar;
@@ -640,8 +640,8 @@ export interface Share {
 
 export interface CreateShareRequest {
     resourceType: Share['resourceType'];
-    resourceID: string;
-    sharedWithUserID: string;
+    resourceId: string;
+    sharedWithUserId: string;
     permissionLevel: Share['permissionLevel'];
 }
 
@@ -748,16 +748,16 @@ export type NotificationMetadata =
     | SystemAnnouncementMetadata;
 
 export interface Notification {
-    notificationID: string;
+    id: string;
     type: 'task_due_soon' | 'task_overdue' | 'task_completed' | 'calendar_reminder' | 'focus_session_complete' | 'streak_milestone' | 'share_received' | 'collaboration_update' | 'system_announcement';
     title: string;
     message: string;
     read: boolean;
     createdAt: string;
     readAt?: string;
-    userID: string;
+    userId: string;
     relatedResourceType?: string;
-    relatedResourceID?: string;
+    relatedResourceId?: string;
     metadata?: NotificationMetadata;
 }
 
@@ -853,7 +853,7 @@ export interface ProductivityInsights {
 // =============================================================================
 
 export interface UploadedFile {
-    fileID: string;
+    id: string;
     filename: string;
     originalName: string;
     mimetype: string;
@@ -861,7 +861,7 @@ export interface UploadedFile {
     url: string;
     type: 'avatars' | 'attachments' | 'general';
     uploadedAt: string;
-    userID: string;
+    userId: string;
 }
 
 export interface UploadStats {
@@ -1015,19 +1015,19 @@ export type Prettify<T> = {
 
 export const isTask = (obj: unknown): obj is Task => {
     return typeof obj === 'object' && obj !== null &&
-        'taskID' in obj && typeof (obj as Task).taskID === 'string' &&
+        'id' in obj && typeof (obj as Task).id === 'string' &&
         'taskName' in obj && typeof (obj as Task).taskName === 'string';
 };
 
 export const isCalendarEvent = (obj: unknown): obj is CalendarEvent => {
     return typeof obj === 'object' && obj !== null &&
-        'eventID' in obj && typeof (obj as CalendarEvent).eventID === 'string' &&
+        'id' in obj && typeof (obj as CalendarEvent).id === 'string' &&
         'startTime' in obj && typeof (obj as CalendarEvent).startTime === 'string';
 };
 
 export const isFocusSession = (obj: unknown): obj is FocusSession => {
     return typeof obj === 'object' && obj !== null &&
-        'sessionID' in obj && typeof (obj as FocusSession).sessionID === 'string' &&
+        'id' in obj && typeof (obj as FocusSession).id === 'string' &&
         'startTime' in obj && typeof (obj as FocusSession).startTime === 'string';
 };
 

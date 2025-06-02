@@ -162,7 +162,7 @@ const TaskSelector: React.FC<TaskSelectorProps> = ({
       >
         <option value="">General focus session</option>
         {incompleteTasks.map((task) => (
-          <option key={task.taskID} value={task.taskID}>
+          <option key={task.id} value={task.id}>
             {task.taskName}{" "}
             {task.priority === "high"
               ? "🔥"
@@ -216,13 +216,13 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
           if (prev <= 1) {
             // Timer finished
             addNotification({
-              notificationID: `focus-session-complete-${Date.now()}`,
+              id: `focus-session-complete-${Date.now()}`,
               type: "focus_session_complete",
               title: "Focus Session Complete! 🎉",
               message: "Great job! You completed a full focus session.",
               read: false,
               createdAt: new Date().toISOString(),
-              userID: "system", // or use the actual user ID if available
+              userId: "system", // or use the actual user ID if available
             });
             onEnd(true);
             return 0;
@@ -431,11 +431,11 @@ const FocusSessionStarter: React.FC<FocusSessionStarterProps> = ({
   ];
 
   const handleStart = () => {
-    onStart({ taskID: selectedTaskId });
+    onStart({ taskId: selectedTaskId });
   };
 
   const selectedTask = selectedTaskId
-    ? tasks.find((t) => t.taskID === selectedTaskId)
+    ? tasks.find((t) => t.id === selectedTaskId)
     : null;
 
   return (
@@ -693,7 +693,7 @@ const FocusStatsComponent: React.FC<FocusStatsProps> = ({
           <div className="space-y-3">
             {todaySummary.sessions.slice(-5).map((session) => (
               <div
-                key={session.sessionID}
+                key={session.id}
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
@@ -796,13 +796,13 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
     const success = await startSession(data);
     if (success) {
       addNotification({
-        notificationID: `system-announcement-${Date.now()}`,
+        id: `system-announcement-${Date.now()}`,
         type: "system_announcement",
         title: "Focus Session Started! 🎯",
         message: "Time to get in the zone and focus!",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system", // or use actual user ID if available
+        userId: "system", // or use actual user ID if available
       });
     }
   };
@@ -813,7 +813,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
     const success = await endSession(completed);
     if (success) {
       addNotification({
-        notificationID: `focus-session-${Date.now()}`,
+        id: `focus-session-${Date.now()}`,
         type: completed ? "focus_session_complete" : "system_announcement",
         title: completed ? "Session Complete! 🎉" : "Session Ended",
         message: completed
@@ -821,7 +821,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
           : "Session ended. Every bit of focus counts!",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system", // or use actual user ID if available
+        userId: "system", // or use actual user ID if available
       });
     }
   };
@@ -829,26 +829,26 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
   const handlePauseSession = () => {
     pauseSession();
     addNotification({
-      notificationID: `system-announcement-${Date.now()}`,
+      id: `system-announcement-${Date.now()}`,
       type: "system_announcement",
       title: "Session Paused",
       message: "Take a quick break if you need it!",
       read: false,
       createdAt: new Date().toISOString(),
-      userID: "system", // or use actual user ID if available
+      userId: "system", // or use actual user ID if available
     });
   };
 
   const handleResumeSession = () => {
     resumeSession();
     addNotification({
-      notificationID: `system-announcement-${Date.now()}`,
+      id: `system-announcement-${Date.now()}`,
       type: "system_announcement",
       title: "Back to Focus! 💪",
       message: "Welcome back! Let's keep that momentum going.",
       read: false,
       createdAt: new Date().toISOString(),
-      userID: "system", // or use actual user ID if available
+      userId: "system", // or use actual user ID if available
     });
   };
 

@@ -165,13 +165,13 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
       // Show validation errors
       if (errors.length > 0) {
         addNotification({
-          notificationID: Math.random().toString(36).substring(2, 15),
+          id: Math.random().toString(36).substring(2, 15),
           type: "system_announcement",
           title: "Upload Validation Failed",
           message: errors.join(", "),
           read: false,
           createdAt: new Date().toISOString(),
-          userID: "system",
+          userId: "system",
         });
       }
 
@@ -238,13 +238,13 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
           );
 
           addNotification({
-            notificationID: Math.random().toString(36).substring(2, 15),
+            id: Math.random().toString(36).substring(2, 15),
             type: "system_announcement",
             title: "Upload Failed",
             message: `Failed to upload ${uploadingFile.file.name}`,
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
 
           return null;
@@ -257,13 +257,13 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
 
         if (successfulUploads.length > 0) {
           addNotification({
-            notificationID: Math.random().toString(36).substring(2, 15),
+            id: Math.random().toString(36).substring(2, 15),
             type: "system_announcement",
             title: "Files Uploaded! 📎",
             message: `Successfully uploaded ${successfulUploads.length} file(s)`,
             read: false,
             createdAt: new Date().toISOString(),
-            userID: "system",
+            userId: "system",
           });
 
           onFilesUploaded?.(successfulUploads);
@@ -341,27 +341,27 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
         method: "DELETE",
       });
 
-      setUploadedFiles((prev) => prev.filter((f) => f.fileID !== file.fileID));
+      setUploadedFiles((prev) => prev.filter((f) => f.id !== file.id));
 
       addNotification({
-        notificationID: Math.random().toString(36).substring(2, 15),
+        id: Math.random().toString(36).substring(2, 15),
         type: "system_announcement",
         title: "File Removed! 🗑️",
         message: "File has been successfully deleted",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system",
+        userId: "system",
       });
     } catch (error) {
       console.error("Failed to remove file:", error);
       addNotification({
-        notificationID: Math.random().toString(36).substring(2, 15),
+        id: Math.random().toString(36).substring(2, 15),
         type: "system_announcement",
         title: "Delete Failed",
         message: "Failed to remove file",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system",
+        userId: "system",
       });
     }
   };
@@ -484,7 +484,7 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
             ))}
             {uploadedFiles.map((file) => (
               <div
-                key={file.fileID}
+                key={file.id}
                 className="flex items-center space-x-2 text-sm"
               >
                 <span>{getFileIcon(file.filename)}</span>
@@ -679,7 +679,7 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
           >
             {uploadedFiles.map((file) => (
               <div
-                key={file.fileID || file.filename}
+                key={file.id || file.filename}
                 className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden group hover:shadow-lg transition-shadow"
               >
                 {showPreviews && getFilePreview(file) && (

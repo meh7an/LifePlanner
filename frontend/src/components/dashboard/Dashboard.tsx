@@ -175,11 +175,11 @@ const TodaysTasks: React.FC = () => {
           <>
             {dueTasks.slice(0, 5).map((task) => (
               <div
-                key={task.taskID}
+                key={task.id}
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
               >
                 <button
-                  onClick={() => toggleTaskComplete(task.taskID)}
+                  onClick={() => toggleTaskComplete(task.id)}
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                     task.completed
                       ? "bg-green-500 border-green-500"
@@ -327,7 +327,7 @@ const UpcomingEvents: React.FC = () => {
 
             return (
               <div
-                key={event.eventID}
+                key={event.id}
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
                 <div

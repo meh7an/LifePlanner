@@ -126,11 +126,11 @@ export const useTaskStore = create<TaskState>()(
                     const response = await apiClient.updateTask(id, data);
                     if (response.data) {
                         set((state) => {
-                            const index = state.tasks.findIndex((t: Task) => t.taskID === id);
+                            const index = state.tasks.findIndex((t: Task) => t.id === id);
                             if (index !== -1) {
                                 state.tasks[index] = response.data;
                             }
-                            if (state.selectedTask?.taskID === id) {
+                            if (state.selectedTask?.id === id) {
                                 state.selectedTask = response.data;
                             }
                             state.updateLoading = false;
@@ -155,8 +155,8 @@ export const useTaskStore = create<TaskState>()(
                 try {
                     await apiClient.deleteTask(id);
                     set((state) => {
-                        state.tasks = state.tasks.filter((t: Task) => t.taskID !== id);
-                        if (state.selectedTask?.taskID === id) {
+                        state.tasks = state.tasks.filter((t: Task) => t.id !== id);
+                        if (state.selectedTask?.id === id) {
                             state.selectedTask = null;
                         }
                         state.deleteLoading = false;
@@ -175,7 +175,7 @@ export const useTaskStore = create<TaskState>()(
             },
 
             toggleTaskComplete: async (id) => {
-                const task = get().tasks.find(t => t.taskID === id);
+                const task = get().tasks.find(t => t.id === id);
                 if (!task) return false;
 
                 return await get().updateTask(id, { completed: !task.completed });

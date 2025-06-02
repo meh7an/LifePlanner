@@ -203,13 +203,13 @@ const AdvancedAnalyticsDashboard = () => {
     } catch (error) {
       console.error("Failed to load analytics:", error);
       addNotification({
-        notificationID: `analytics-failed-${Date.now()}`,
+        id: `analytics-failed-${Date.now()}`,
         type: "system_announcement",
         title: "Analytics Failed",
         message: "Unable to load analytics data",
         read: false,
         createdAt: new Date().toISOString(),
-        userID: "system",
+        userId: "system",
       });
     }
   }, [fetchInsights, selectedPeriod, addNotification]);
