@@ -18,6 +18,8 @@ import { useBoardStore } from "@/lib/stores/boardStore";
 import { useTaskStore } from "@/lib/stores/taskStore";
 import { useUIStore } from "@/lib/stores/uiStore";
 import { format, parseISO, isBefore, endOfDay } from "date-fns";
+import TaskComponents from "../tasks/Task";
+const { TaskModal } = TaskComponents;
 
 // =============================================================================
 // 🎯 BOARD UTILITIES
@@ -331,6 +333,7 @@ interface ListModalProps {
   onClose: () => void;
   boardId: string;
   list?: List | null;
+  onSuccess?: () => void; // Add success callback
 }
 
 const ListModal: React.FC<ListModalProps> = ({
@@ -338,6 +341,7 @@ const ListModal: React.FC<ListModalProps> = ({
   onClose,
   boardId,
   list,
+  onSuccess, // Add this prop
 }) => {
   const { createList, updateList, deleteList } = useBoardStore();
   const { addNotification } = useUIStore();
@@ -394,6 +398,7 @@ const ListModal: React.FC<ListModalProps> = ({
             userId: "system",
           });
           onClose();
+          onSuccess?.(); // Call success callback to refresh
         }
       } else {
         // For new lists, include the generated ID
@@ -409,6 +414,7 @@ const ListModal: React.FC<ListModalProps> = ({
             userId: "system",
           });
           onClose();
+          onSuccess?.(); // Call success callback to refresh
         }
       }
     } catch (error) {
@@ -444,6 +450,7 @@ const ListModal: React.FC<ListModalProps> = ({
           userId: "system",
         });
         onClose();
+        onSuccess?.(); // Call success callback to refresh
       }
     } catch (error) {
       console.error("List delete error:", error);
@@ -453,6 +460,7 @@ const ListModal: React.FC<ListModalProps> = ({
     }
   };
 
+  // ... rest of the component remains the same
   if (!isOpen) return null;
 
   return (
@@ -886,15 +894,26 @@ interface BoardViewProps {
 
 const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
   const { selectedBoard, fetchBoard } = useBoardStore();
-
   const { tasks, updateTask, deleteTask } = useTaskStore();
   const { addNotification } = useUIStore();
 
-  // Local state for modals only
+  // Local state for modals
   const [listModal, setListModal] = useState({
     isOpen: false,
     list: null as List | null,
   });
+
+  const [taskModal, setTaskModal] = useState({
+    isOpen: false,
+    task: null as Task | null,
+    boardId: "",
+    listId: "",
+  });
+
+  // Add refresh function
+  const refreshBoard = async () => {
+    await fetchBoard(board.id);
+  };
 
   useEffect(() => {
     // Fetch the full board details (including lists) when component mounts
@@ -923,15 +942,28 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
     setListModal({ isOpen: false, list: null });
   };
 
-  // Task handlers
+  const closeTaskModal = () => {
+    setTaskModal({ isOpen: false, task: null, boardId: "", listId: "" });
+  };
+
+  // Task handlers - NOW PROPERLY IMPLEMENTED
   const handleCreateTask = (listId: string) => {
-    // Open task modal (would integrate with existing TaskModal)
-    console.log("Creating task for list:", listId);
+    // Set the list context for new task
+    setTaskModal({
+      isOpen: true,
+      task: null,
+      boardId: board.id,
+      listId: listId,
+    });
   };
 
   const handleEditTask = (task: Task) => {
-    // Open task modal for editing
-    console.log("Editing task:", task.id);
+    setTaskModal({
+      isOpen: true,
+      task: task,
+      boardId: board.id,
+      listId: task.listId || "",
+    });
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -947,6 +979,8 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
           createdAt: new Date().toISOString(),
           userId: "system",
         });
+        // Refresh board to update task counts
+        refreshBoard();
       }
     }
   };
@@ -969,12 +1003,14 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
         createdAt: new Date().toISOString(),
         userId: "system",
       });
+      // Refresh board to update task counts
+      refreshBoard();
     }
   };
 
   return (
     <div className={`${className}`}>
-      {/* Board Header */}
+      {/* Board Header - same as before */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -1017,7 +1053,7 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
           </button>
         </div>
 
-        {/* Board Stats - Use computed stats from current data */}
+        {/* Board Stats */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -1129,6 +1165,16 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
         onClose={closeListModal}
         boardId={board.id}
         list={listModal.list}
+        onSuccess={refreshBoard}
+      />
+
+      {/* Task Modal - NOW WORKING! */}
+      <TaskModal
+        isOpen={taskModal.isOpen}
+        onClose={closeTaskModal}
+        task={taskModal.task}
+        boardId={taskModal.boardId}
+        listId={taskModal.listId}
       />
     </div>
   );

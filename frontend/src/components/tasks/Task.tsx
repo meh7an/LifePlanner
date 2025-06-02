@@ -145,7 +145,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         const success = await updateTask(task.id, {
           taskName: data.taskName,
           description: data.description || undefined,
-          dueTime: data.dueTime || undefined,
+          dueTime: data.dueTime + ":00.000Z" || undefined,
           priority: data.priority,
           listId: data.listId || undefined,
         });
@@ -157,7 +157,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         const success = await createTask({
           taskName: data.taskName,
           description: data.description || undefined,
-          dueTime: data.dueTime || undefined,
+          dueTime: data.dueTime + ":00.000Z" || undefined,
           priority: data.priority,
           boardId: data.boardId,
           listId: data.listId || undefined,
