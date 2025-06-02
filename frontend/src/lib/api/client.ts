@@ -67,7 +67,8 @@ import {
     UpdateViewRequest,
     UploadedFile,
     QueryParams,
-    ViewTemplate
+    ViewTemplate,
+    PaginatedTasks
 } from '@/lib/types';
 
 // =============================================================================
@@ -309,9 +310,9 @@ class ApiClient {
     // ✅ TASK ENDPOINTS
     // =============================================================================
 
-    async getTasks(params?: TaskFilters & QueryParams): Promise<PaginatedResponse<{ tasks: Task[] }>> {
+    async getTasks(params?: TaskFilters & QueryParams): Promise<PaginatedTasks> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ tasks: Task[] }>>(
+        const response = await this.client.get<PaginatedTasks>(
             `/tasks${queryString ? `?${queryString}` : ''}`
         );
         return response.data;

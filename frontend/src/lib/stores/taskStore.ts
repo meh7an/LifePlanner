@@ -57,8 +57,9 @@ export const useTaskStore = create<TaskState>()(
                 set((state) => { state.loading = true; state.error = null; });
                 try {
                     const response = await apiClient.getTasks({ ...get().filters, ...params });
+
                     set((state) => {
-                        state.tasks = response.data?.tasks || [];
+                        state.tasks = response.tasks || [];
                         state.pagination = response.pagination || null;
                         state.loading = false;
                     });

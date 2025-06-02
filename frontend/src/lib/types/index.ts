@@ -148,6 +148,10 @@ export interface Task {
     notesCount?: number;
 }
 
+export interface PaginatedTasks extends PaginatedResponse {
+    tasks: Task[];
+}
+
 export interface TaskStep {
     stepId: string;
     description: string;
@@ -886,7 +890,7 @@ export interface ApiResponse<TData = unknown> {
     details?: string[];
 }
 
-export interface PaginatedResponse<TData = unknown> extends ApiResponse<TData> {
+export interface PaginatedResponse {
     pagination: {
         currentPage: number;
         totalPages: number;
