@@ -74,9 +74,15 @@ interface BoardModalProps {
   isOpen: boolean;
   onClose: () => void;
   board?: Board | null;
+  onSuccess?: () => void; // Add success callback
 }
 
-const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
+const BoardModal: React.FC<BoardModalProps> = ({
+  isOpen,
+  onClose,
+  board,
+  onSuccess,
+}) => {
   const { createBoard, updateBoard, deleteBoard } = useBoardStore();
   const { addNotification } = useUIStore();
 
@@ -114,6 +120,8 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
           return;
         }
         const success = await updateBoard(board.id, formData);
+        console.log("success", success);
+
         if (success) {
           addNotification({
             id: crypto.randomUUID(),
@@ -125,6 +133,8 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
             userId: "system",
           });
           onClose();
+          // Call success callback to refresh the list
+          onSuccess?.();
         }
       } else {
         const success = await createBoard(formData);
@@ -139,6 +149,8 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
             userId: "system",
           });
           onClose();
+          // Call success callback to refresh the list
+          onSuccess?.();
         }
       }
     } catch (error) {
@@ -174,6 +186,8 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
           userId: "system",
         });
         onClose();
+        // Call success callback to refresh the list
+        onSuccess?.();
       }
     } catch (error) {
       console.error("Board delete error:", error);
@@ -183,6 +197,7 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
     }
   };
 
+  // Rest of the component remains the same...
   if (!isOpen) return null;
 
   return (
@@ -327,10 +342,14 @@ const ListModal: React.FC<ListModalProps> = ({
   const { createList, updateList, deleteList } = useBoardStore();
   const { addNotification } = useUIStore();
 
-  const [formData, setFormData] = useState<CreateListRequest>({
-    name: "",
-    orderIndex: 0,
-  });
+  // Updated to include id field for new lists
+  const [formData, setFormData] = useState<CreateListRequest & { id?: string }>(
+    {
+      id: "", // Add id field
+      name: "",
+      orderIndex: 0,
+    }
+  );
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -338,11 +357,14 @@ const ListModal: React.FC<ListModalProps> = ({
   useEffect(() => {
     if (list) {
       setFormData({
+        id: list.id,
         name: list.name,
         orderIndex: list.orderIndex,
       });
     } else {
+      // Generate a new ID for new lists
       setFormData({
+        id: crypto.randomUUID(), // Generate new ID
         name: "",
         orderIndex: 0,
       });
@@ -356,7 +378,11 @@ const ListModal: React.FC<ListModalProps> = ({
 
     try {
       if (list) {
-        const success = await updateList(list.id, formData);
+        // For updates, use the existing list ID
+        const success = await updateList(list.id, {
+          name: formData.name,
+          orderIndex: formData.orderIndex,
+        });
         if (success) {
           addNotification({
             id: crypto.randomUUID(),
@@ -370,6 +396,7 @@ const ListModal: React.FC<ListModalProps> = ({
           onClose();
         }
       } else {
+        // For new lists, include the generated ID
         const success = await createList(boardId, formData);
         if (success) {
           addNotification({
@@ -1352,8 +1379,6 @@ const BoardManagement: React.FC<BoardManagementProps> = ({
   className = "",
 }) => {
   const { boards, loading, fetchBoards, deleteBoard } = useBoardStore();
-  console.log("BoardManagement rendered with boards:", boards);
-
   const { addNotification } = useUIStore();
 
   const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
@@ -1365,6 +1390,11 @@ const BoardManagement: React.FC<BoardManagementProps> = ({
   useEffect(() => {
     fetchBoards();
   }, [fetchBoards]);
+
+  // Add refresh function
+  const refreshBoards = () => {
+    fetchBoards();
+  };
 
   // Navigation handlers
   const handleSelectBoard = (board: Board) => {
@@ -1404,6 +1434,9 @@ const BoardManagement: React.FC<BoardManagementProps> = ({
         if (selectedBoard?.id === boardId) {
           setSelectedBoard(null);
         }
+
+        // Refresh the boards list
+        refreshBoards();
       }
     }
   };
@@ -1473,11 +1506,12 @@ const BoardManagement: React.FC<BoardManagementProps> = ({
         />
       )}
 
-      {/* Board Modal */}
+      {/* Board Modal - Now includes onSuccess callback */}
       <BoardModal
         isOpen={boardModal.isOpen}
         onClose={closeBoardModal}
         board={boardModal.board}
+        onSuccess={refreshBoards} // Add this line!
       />
     </div>
   );

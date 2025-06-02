@@ -103,9 +103,9 @@ export const useCalendarStore = create<CalendarState>()(
                 set((state) => { state.createLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.createCalendar(data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
-                            state.calendars.push(response.data);
+                            state.calendars.push(response);
                             state.createLoading = false;
                         });
                         toast.success('Calendar created successfully! 📅');
@@ -127,9 +127,9 @@ export const useCalendarStore = create<CalendarState>()(
                 set((state) => { state.createLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.createEvent(data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
-                            state.events.push(response.data);
+                            state.events.push(response);
                             state.createLoading = false;
                         });
                         toast.success('Event created successfully! 🎉');
@@ -151,11 +151,11 @@ export const useCalendarStore = create<CalendarState>()(
                 set((state) => { state.updateLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.updateEvent(id, data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
                             const index = state.events.findIndex((e: CalendarEvent) => e.id === id);
                             if (index !== -1) {
-                                state.events[index] = response.data;
+                                state.events[index] = response;
                             }
                             state.updateLoading = false;
                         });

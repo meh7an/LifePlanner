@@ -100,9 +100,9 @@ export const useTaskStore = create<TaskState>()(
                 set((state) => { state.createLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.createTask(data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
-                            state.tasks.unshift(response.data);
+                            state.tasks.unshift(response);
                             state.createLoading = false;
                         });
                         toast.success('Task created successfully! 🎉');
@@ -124,14 +124,14 @@ export const useTaskStore = create<TaskState>()(
                 set((state) => { state.updateLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.updateTask(id, data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
                             const index = state.tasks.findIndex((t: Task) => t.id === id);
                             if (index !== -1) {
-                                state.tasks[index] = response.data;
+                                state.tasks[index] = response;
                             }
                             if (state.selectedTask?.id === id) {
-                                state.selectedTask = response.data;
+                                state.selectedTask = response;
                             }
                             state.updateLoading = false;
                         });

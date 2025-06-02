@@ -65,7 +65,7 @@ export const useBoardStore = create<BoardState>()(
                 try {
                     const response = await apiClient.getBoard(id);
                     set((state) => {
-                        state.selectedBoard = response.data || null;
+                        state.selectedBoard = response || null;
                     });
                 } catch (error) {
                     const apiError = error as ApiError;
@@ -103,14 +103,14 @@ export const useBoardStore = create<BoardState>()(
                 set((state) => { state.updateLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.updateBoard(id, data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
                             const index = state.boards.findIndex((b: Board) => b.id === id);
-                            if (index !== -1 && response.data) {
-                                state.boards[index] = response.data;
+                            if (index !== -1 && response) {
+                                state.boards[index] = response;
                             }
                             if (state.selectedBoard?.id === id) {
-                                state.selectedBoard = response.data ?? null;
+                                state.selectedBoard = response ?? null;
                             }
                             state.updateLoading = false;
                         });

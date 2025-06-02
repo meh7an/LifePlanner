@@ -261,19 +261,19 @@ class ApiClient {
         return response.data;
     }
 
-    async getBoard(id: string): Promise<ApiResponse<Board>> {
-        const response = await this.client.get<ApiResponse<Board>>(`/boards/${id}`);
-        return response.data;
+    async getBoard(id: string): Promise<Board> {
+        const response = await this.client.get<{ message: string, board: Board }>(`/boards/${id}`);
+        return response.data.board;
     }
 
     async createBoard(data: CreateBoardRequest): Promise<Board> {
-        const response = await this.client.post<Board>('/boards', data);
-        return response.data;
+        const response = await this.client.post<{ message: string, board: Board }>('/boards', data);
+        return response.data.board;
     }
 
-    async updateBoard(id: string, data: UpdateBoardRequest): Promise<ApiResponse<Board>> {
-        const response = await this.client.put<ApiResponse<Board>>(`/boards/${id}`, data);
-        return response.data;
+    async updateBoard(id: string, data: UpdateBoardRequest): Promise<Board> {
+        const response = await this.client.put<{ message: string, board: Board }>(`/boards/${id}`, data);
+        return response.data.board;
     }
 
     async deleteBoard(id: string, permanent = false): Promise<ApiResponse<void>> {
@@ -327,14 +327,14 @@ class ApiClient {
         return response.data;
     }
 
-    async createTask(data: CreateTaskRequest): Promise<ApiResponse<Task>> {
-        const response = await this.client.post<ApiResponse<Task>>('/tasks', data);
-        return response.data;
+    async createTask(data: CreateTaskRequest): Promise<Task> {
+        const response = await this.client.post<{ message: string, task: Task }>('/tasks', data);
+        return response.data.task;
     }
 
-    async updateTask(id: string, data: UpdateTaskRequest): Promise<ApiResponse<Task>> {
-        const response = await this.client.put<ApiResponse<Task>>(`/tasks/${id}`, data);
-        return response.data;
+    async updateTask(id: string, data: UpdateTaskRequest): Promise<Task> {
+        const response = await this.client.put<{ message: string, task: Task }>(`/tasks/${id}`, data);
+        return response.data.task;
     }
 
     async deleteTask(id: string): Promise<ApiResponse<void>> {
@@ -375,9 +375,9 @@ class ApiClient {
         return response.data;
     }
 
-    async createCalendar(data: CreateCalendarRequest): Promise<ApiResponse<Calendar>> {
-        const response = await this.client.post<ApiResponse<Calendar>>('/calendars', data);
-        return response.data;
+    async createCalendar(data: CreateCalendarRequest): Promise<Calendar> {
+        const response = await this.client.post<{ message: string, calendar: Calendar }>('/calendars', data);
+        return response.data.calendar;
     }
 
     async updateCalendar(id: string, data: UpdateCalendarRequest): Promise<ApiResponse<Calendar>> {
@@ -422,14 +422,14 @@ class ApiClient {
         return response.data;
     }
 
-    async createEvent(data: CreateEventRequest): Promise<ApiResponse<CalendarEvent>> {
-        const response = await this.client.post<ApiResponse<CalendarEvent>>('/calendars/events', data);
-        return response.data;
+    async createEvent(data: CreateEventRequest): Promise<CalendarEvent> {
+        const response = await this.client.post<{ message: string, event: CalendarEvent }>('/calendars/events', data);
+        return response.data.event;
     }
 
-    async updateEvent(id: string, data: UpdateEventRequest): Promise<ApiResponse<CalendarEvent>> {
-        const response = await this.client.put<ApiResponse<CalendarEvent>>(`/calendars/events/${id}`, data);
-        return response.data;
+    async updateEvent(id: string, data: UpdateEventRequest): Promise<CalendarEvent> {
+        const response = await this.client.put<{ message: string, event: CalendarEvent }>(`/calendars/events/${id}`, data);
+        return response.data.event;
     }
 
     async deleteEvent(id: string): Promise<ApiResponse<void>> {
