@@ -190,12 +190,52 @@ export const startFocusSession = async (req: AuthenticatedRequest, res: Response
             return;
         }
 
-        // Check if user has any active (incomplete) focus sessions
+        // Check for stale active sessions (older than 24 hours)
+        const yesterday = new Date();
+        yesterday.setHours(yesterday.getHours() - 24);
+
+        const staleActiveSessions = await prisma.focusSession.findMany({
+            where: {
+                userId,
+                completed: false,
+                endTime: null,
+                startTime: {
+                    lt: yesterday // Sessions started more than 24 hours ago
+                }
+            }
+        });
+
+        // Auto-cleanup stale sessions
+        if (staleActiveSessions.length > 0) {
+            console.log(`Cleaning up ${staleActiveSessions.length} stale active sessions for user ${userId}`);
+
+            for (const staleSession of staleActiveSessions) {
+                const endTime = new Date();
+                const durationMinutes = Math.round((endTime.getTime() - staleSession.startTime.getTime()) / (1000 * 60));
+
+                await prisma.focusSession.update({
+                    where: { id: staleSession.id },
+                    data: {
+                        endTime,
+                        durationMinutes,
+                        completed: false // Mark as incomplete since it was abandoned
+                    }
+                });
+            }
+        }
+
+        // Now check for genuinely active sessions (started today)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const activeSessions = await prisma.focusSession.findMany({
             where: {
                 userId,
                 completed: false,
-                endTime: null
+                endTime: null,
+                startTime: {
+                    gte: today // Only sessions started today
+                }
             }
         });
 
