@@ -49,7 +49,7 @@ export const useBoardStore = create<BoardState>()(
                 try {
                     const response = await apiClient.getBoards(includeArchived);
                     set((state) => {
-                        state.boards = response.data?.boards || [];
+                        state.boards = response.boards || [];
                         state.loading = false;
                     });
                 } catch (error) {
@@ -79,9 +79,9 @@ export const useBoardStore = create<BoardState>()(
                 set((state) => { state.createLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.createBoard(data);
-                    if (response.data) {
+                    if (response.boardID) {
                         set((state) => {
-                            state.boards.unshift(response.data);
+                            state.boards.unshift(response);
                             state.createLoading = false;
                         });
                         toast.success('Board created successfully! 📋');
@@ -106,11 +106,11 @@ export const useBoardStore = create<BoardState>()(
                     if (response.data) {
                         set((state) => {
                             const index = state.boards.findIndex((b: Board) => b.boardID === id);
-                            if (index !== -1) {
+                            if (index !== -1 && response.data) {
                                 state.boards[index] = response.data;
                             }
                             if (state.selectedBoard?.boardID === id) {
-                                state.selectedBoard = response.data;
+                                state.selectedBoard = response.data ?? null;
                             }
                             state.updateLoading = false;
                         });
@@ -163,14 +163,16 @@ export const useBoardStore = create<BoardState>()(
             createList: async (boardId, data) => {
                 try {
                     const response = await apiClient.createList(boardId, data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
                             // Add to selected board if it matches
                             if (state.selectedBoard?.boardID === boardId) {
                                 if (!state.selectedBoard.lists) {
                                     state.selectedBoard.lists = [];
                                 }
-                                state.selectedBoard.lists.push(response.data);
+                                if (response) {
+                                    state.selectedBoard.lists.push(response);
+                                }
                             }
 
                             // Update board in boards array
@@ -179,7 +181,7 @@ export const useBoardStore = create<BoardState>()(
                                 if (!state.boards[boardIndex].lists) {
                                     state.boards[boardIndex].lists = [];
                                 }
-                                state.boards[boardIndex].lists!.push(response.data);
+                                state.boards[boardIndex].lists!.push(response);
                             }
                         });
                         toast.success('List created successfully! 📝');
@@ -196,13 +198,13 @@ export const useBoardStore = create<BoardState>()(
             updateList: async (id, data) => {
                 try {
                     const response = await apiClient.updateList(id, data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
                             // Update in selected board
                             if (state.selectedBoard?.lists) {
                                 const listIndex = state.selectedBoard.lists.findIndex((l: List) => l.listID === id);
                                 if (listIndex !== -1) {
-                                    state.selectedBoard.lists[listIndex] = response.data;
+                                    state.selectedBoard.lists[listIndex] = response;
                                 }
                             }
 
@@ -210,8 +212,8 @@ export const useBoardStore = create<BoardState>()(
                             state.boards.forEach((board: Board) => {
                                 if (board.lists) {
                                     const listIndex: number = board.lists.findIndex((l: List) => l.listID === id);
-                                    if (listIndex !== -1 && response.data) {
-                                        board.lists[listIndex] = response.data;
+                                    if (listIndex !== -1 && response) {
+                                        board.lists[listIndex] = response;
                                     }
                                 }
                             });

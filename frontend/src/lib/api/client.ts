@@ -254,10 +254,10 @@ class ApiClient {
     // 📋 BOARD ENDPOINTS
     // =============================================================================
 
-    async getBoards(includeArchived = false): Promise<ApiResponse<{ boards: Board[]; count: number }>> {
-        const response = await this.client.get<ApiResponse<{ boards: Board[]; count: number }>>(
+    async getBoards(includeArchived = false): Promise<{ boards: Board[]; count: number }> {
+        const response = await this.client.get<{ boards: Board[]; count: number }>(
             `/boards?includeArchived=${includeArchived}`
-        );
+        )
         return response.data;
     }
 
@@ -266,8 +266,8 @@ class ApiClient {
         return response.data;
     }
 
-    async createBoard(data: CreateBoardRequest): Promise<ApiResponse<Board>> {
-        const response = await this.client.post<ApiResponse<Board>>('/boards', data);
+    async createBoard(data: CreateBoardRequest): Promise<Board> {
+        const response = await this.client.post<Board>('/boards', data);
         return response.data;
     }
 
@@ -290,13 +290,13 @@ class ApiClient {
     // 📝 LIST ENDPOINTS
     // =============================================================================
 
-    async createList(boardId: string, data: CreateListRequest): Promise<ApiResponse<List>> {
-        const response = await this.client.post<ApiResponse<List>>(`/boards/${boardId}/lists`, data);
+    async createList(boardId: string, data: CreateListRequest): Promise<List> {
+        const response = await this.client.post<List>(`/boards/${boardId}/lists`, data);
         return response.data;
     }
 
-    async updateList(id: string, data: UpdateListRequest): Promise<ApiResponse<List>> {
-        const response = await this.client.put<ApiResponse<List>>(`/boards/lists/${id}`, data);
+    async updateList(id: string, data: UpdateListRequest): Promise<List> {
+        const response = await this.client.put<List>(`/boards/lists/${id}`, data);
         return response.data;
     }
 

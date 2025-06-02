@@ -109,6 +109,10 @@ const BoardModal: React.FC<BoardModalProps> = ({ isOpen, onClose, board }) => {
 
     try {
       if (board) {
+        if (!board.boardID) {
+          setErrors({ general: "Board ID is required for updates." });
+          return;
+        }
         const success = await updateBoard(board.boardID, formData);
         if (success) {
           addNotification({
@@ -1125,6 +1129,8 @@ const BoardsGrid: React.FC<BoardsGridProps> = ({
   onDeleteBoard,
   className = "",
 }) => {
+  console.log("BoardsGrid rendered with boards:", boards);
+
   return (
     <div className={`${className}`}>
       {/* Header */}
@@ -1347,6 +1353,8 @@ const BoardManagement: React.FC<BoardManagementProps> = ({
   className = "",
 }) => {
   const { boards, loading, fetchBoards, deleteBoard } = useBoardStore();
+  console.log("BoardManagement rendered with boards:", boards);
+
   const { addNotification } = useUIStore();
 
   const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);

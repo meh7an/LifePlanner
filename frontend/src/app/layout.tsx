@@ -1,6 +1,9 @@
+// app/layout.tsx - Root layout for the entire application
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthInitializer } from "@/components/auth/AuthInitializer";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -67,10 +70,41 @@ export default function RootLayout({
         className={`${inter.className} antialiased`}
         suppressHydrationWarning
       >
-        <div id="root" className="min-h-screen">
-          {children}
-        </div>
-        {/* Portal for modals and overlays */}
+        <AuthInitializer>
+          <div id="root" className="min-h-screen">
+            {children}
+          </div>
+        </AuthInitializer>
+
+        {/* Global Toast Notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "#fff",
+              color: "#1f2937",
+              borderRadius: "12px",
+              border: "1px solid #d1fae5",
+              boxShadow:
+                "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            },
+            success: {
+              iconTheme: {
+                primary: "#10b981",
+                secondary: "#fff",
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#fff",
+              },
+            },
+          }}
+        />
+
+        {/* Portal containers for modals and overlays */}
         <div id="modal-root" />
         <div id="tooltip-root" />
         <div id="notification-root" />

@@ -1,5 +1,5 @@
 // =============================================================================
-// 🔐 ZUSTAND AUTH STORE - lib/stores/authStore.ts
+// 🔐 ZUSTAND AUTH STORE - lib/stores/authStore.ts (FIXED VERSION)
 // =============================================================================
 
 import { create } from 'zustand';
@@ -27,6 +27,10 @@ interface AuthState {
     isAuthenticated: boolean;
     isInitialized: boolean;
 
+    // Token data (now persisted)
+    token: string | null;
+    refreshToken: string | null;
+
     // Loading states
     loginLoading: boolean;
     registerLoading: boolean;
@@ -53,6 +57,7 @@ interface AuthState {
     clearErrors: () => void;
     clearAuthData: () => void;
     initializeAuth: () => Promise<void>;
+    setTokens: (token: string, refreshToken: string) => void;
 
     // Getters (computed values)
     hasPermission: (permission: string) => boolean;
@@ -67,13 +72,15 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
     devtools(
         persist(
-            immer((set, get) => ({
+            immer<AuthState>((set, get) => ({
                 // =============================================================================
                 // 📊 INITIAL STATE
                 // =============================================================================
                 user: null,
                 isAuthenticated: false,
                 isInitialized: false,
+                token: null,
+                refreshToken: null,
 
                 loginLoading: false,
                 registerLoading: false,
@@ -85,6 +92,21 @@ export const useAuthStore = create<AuthState>()(
                 registerError: null,
                 profileError: null,
                 passwordError: null,
+
+                // =============================================================================
+                // 🔐 TOKEN MANAGEMENT
+                // =============================================================================
+
+                setTokens: (token: string, refreshToken: string) => {
+                    set((state) => {
+                        state.token = token;
+                        state.refreshToken = refreshToken;
+                    });
+
+                    // Set tokens in API client
+                    apiClient.setAuthToken(token);
+                    apiClient.setRefreshToken(refreshToken);
+                },
 
                 // =============================================================================
                 // 🔐 AUTHENTICATION ACTIONS
@@ -99,9 +121,8 @@ export const useAuthStore = create<AuthState>()(
                     try {
                         const response: AuthResponse = await apiClient.login(credentials);
 
-                        // Set tokens in API client
-                        apiClient.setAuthToken(response.token);
-                        apiClient.setRefreshToken(response.refreshToken);
+                        // Set tokens using our setter
+                        get().setTokens(response.token, response.refreshToken);
 
                         set((state) => {
                             state.user = response.user as UserWithStats;
@@ -137,9 +158,8 @@ export const useAuthStore = create<AuthState>()(
                     try {
                         const response: AuthResponse = await apiClient.register(data);
 
-                        // Set tokens in API client
-                        apiClient.setAuthToken(response.token);
-                        apiClient.setRefreshToken(response.refreshToken);
+                        // Set tokens using our setter
+                        get().setTokens(response.token, response.refreshToken);
 
                         set((state) => {
                             state.user = response.user as UserWithStats;
@@ -178,17 +198,10 @@ export const useAuthStore = create<AuthState>()(
                         console.warn('Logout API call failed:', error);
                     } finally {
                         // Clear all auth data
-                        apiClient.clearTokens();
+                        get().clearAuthData();
 
                         set((state) => {
-                            state.user = null;
-                            state.isAuthenticated = false;
-                            state.isInitialized = false;
                             state.logoutLoading = false;
-                            state.loginError = null;
-                            state.registerError = null;
-                            state.profileError = null;
-                            state.passwordError = null;
                         });
 
                         toast.success('Logged out successfully! See you soon! 👋');
@@ -208,7 +221,10 @@ export const useAuthStore = create<AuthState>()(
                         }
                     } catch (error) {
                         console.warn('Failed to refresh user data:', error);
-                        // Don't logout on refresh failure, token might still be valid
+                        // If token is invalid, logout
+                        if ((error as ApiError).statusCode === 401) {
+                            get().clearAuthData();
+                        }
                     }
                 },
 
@@ -323,11 +339,16 @@ export const useAuthStore = create<AuthState>()(
                 },
 
                 clearAuthData: () => {
+                    // Clear API client tokens
                     apiClient.clearTokens();
+
+                    // Clear store state
                     set((state) => {
                         state.user = null;
                         state.isAuthenticated = false;
-                        state.isInitialized = false;
+                        state.isInitialized = true; // Keep initialized true
+                        state.token = null;
+                        state.refreshToken = null;
                         state.loginError = null;
                         state.registerError = null;
                         state.profileError = null;
@@ -336,16 +357,23 @@ export const useAuthStore = create<AuthState>()(
                 },
 
                 initializeAuth: async (): Promise<void> => {
-                    // Check if we have a token in storage
-                    if (!apiClient.isAuthenticated()) {
+                    const { token, refreshToken } = get();
+
+                    // If no tokens in store, mark as initialized and return
+                    if (!token || !refreshToken) {
                         set((state) => {
                             state.isInitialized = true;
+                            state.isAuthenticated = false;
                         });
                         return;
                     }
 
+                    // Set tokens in API client from persisted store
+                    apiClient.setAuthToken(token);
+                    apiClient.setRefreshToken(refreshToken);
+
                     try {
-                        // Try to get user data with existing token
+                        // Try to get user data with persisted token
                         const response = await apiClient.getCurrentUser();
 
                         if (response.data) {
@@ -354,21 +382,25 @@ export const useAuthStore = create<AuthState>()(
                                 state.isAuthenticated = true;
                                 state.isInitialized = true;
                             });
+
+                            console.log('🎉 Authentication restored from storage');
                         } else {
-                            // Token is invalid, clear auth data
+                            // No user data, clear auth
                             get().clearAuthData();
-                            set((state) => {
-                                state.isInitialized = true;
-                            });
                         }
                     } catch (error) {
-                        console.log('Failed to initialize auth:', error);
+                        console.log('❌ Failed to restore authentication:', error);
 
-                        // Token is invalid or expired, clear auth data
-                        get().clearAuthData();
-                        set((state) => {
-                            state.isInitialized = true;
-                        });
+                        // If 401, token is invalid - clear everything
+                        if ((error as ApiError).statusCode === 401) {
+                            get().clearAuthData();
+                        } else {
+                            // Other errors - still mark as initialized but not authenticated
+                            set((state) => {
+                                state.isInitialized = true;
+                                state.isAuthenticated = false;
+                            });
+                        }
                     }
                 },
 
@@ -403,15 +435,21 @@ export const useAuthStore = create<AuthState>()(
             })),
             {
                 name: 'auth-store',
+                // Persist tokens, user data, and auth status
                 partialize: (state) => ({
-                    // Only persist user data and auth status
                     user: state.user,
                     isAuthenticated: state.isAuthenticated,
+                    token: state.token,
+                    refreshToken: state.refreshToken,
                 }),
+                // Initialize auth after rehydration from storage
                 onRehydrateStorage: () => (state) => {
-                    // Initialize auth after rehydration
+                    console.log('🔄 Rehydrating auth store...');
                     if (state) {
-                        state.initializeAuth();
+                        // Initialize auth with a small delay to ensure everything is ready
+                        setTimeout(() => {
+                            state.initializeAuth();
+                        }, 100);
                     }
                 },
             }
