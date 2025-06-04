@@ -328,8 +328,8 @@ class ApiClient {
     }
 
     async getTodayTasks(): Promise<TodayTasksOverview> {
-        const response = await this.client.get<TodayTasksOverview>('/tasks/today');
-        return response.data;
+        const response = await this.client.get<{ message: string, data: TodayTasksOverview }>('/tasks/today');
+        return response.data.data;
     }
 
     async getTask(id: string): Promise<Task> {
@@ -538,15 +538,17 @@ class ApiClient {
     }
 
     async getDashboardToday(): Promise<DashboardOverview> {
-        const response = await this.client.get<DashboardOverview>('/dashboard/today');
-        return response.data;
+        const response = await this.client.get<{ message: string, overview: DashboardOverview }>('/dashboard/today');
+        return response.data.overview;
     }
 
     async getProductivityInsights(period?: string): Promise<ProductivityInsights> {
-        const response = await this.client.get<ProductivityInsights>(
+        const response = await this.client.get<{ message: string, insights: ProductivityInsights }>(
             `/dashboard/insights${period ? `?period=${period}` : ''}`
         );
-        return response.data;
+        console.log('Productivity Insights:', response.data.insights);
+
+        return response.data.insights;
     }
 
     // =============================================================================

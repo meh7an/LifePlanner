@@ -70,6 +70,7 @@ model Task {
   description String?
   dueTime     DateTime?
   completed   Boolean  @default(false)
+  completedAt DateTime?
   newTask     Boolean  @default(true)
   priority    String   @default("medium") // low, medium, high
   status      String   @default("todo") // todo, in_progress, done

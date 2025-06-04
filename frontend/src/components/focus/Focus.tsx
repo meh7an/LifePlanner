@@ -1,5 +1,5 @@
 // =============================================================================
-// ⚡ LIFE PLANNER - COMPLETE FOCUS TIMER SYSTEM
+// ⚡ LIFE PLANNER - COMPLETE FOCUS TIMER SYSTEM (FIXED)
 // =============================================================================
 
 "use client";
@@ -177,7 +177,7 @@ const TaskSelector: React.FC<TaskSelectorProps> = ({
 };
 
 // =============================================================================
-// ⚡ ACTIVE FOCUS SESSION COMPONENT
+// ⚡ ACTIVE FOCUS SESSION COMPONENT (FIXED)
 // =============================================================================
 
 interface ActiveFocusSessionProps {
@@ -200,8 +200,9 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { addNotification } = useUIStore();
 
-  const defaultDuration = 25 * 60; // 25 minutes in seconds
-  console.log("session", session);
+  // FIXED: Use the actual session duration instead of hardcoded 25 minutes
+  const sessionDurationMinutes = session.durationMinutes || 25;
+  const totalDurationSeconds = sessionDurationMinutes * 60;
 
   const startTime = parseISO(session.startTime);
   const elapsedMinutes =
@@ -209,7 +210,8 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
   const elapsedSeconds = elapsedMinutes * 60;
 
   useEffect(() => {
-    const remaining = Math.max(0, defaultDuration - elapsedSeconds);
+    // FIXED: Calculate remaining time based on actual session duration
+    const remaining = Math.max(0, totalDurationSeconds - elapsedSeconds);
     setTimeRemaining(remaining);
 
     if (!isPaused && remaining > 0) {
@@ -224,7 +226,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
               message: "Great job! You completed a full focus session.",
               read: false,
               createdAt: new Date().toISOString(),
-              userId: "system", // or use the actual user ID if available
+              userId: "system",
             });
             onEnd(true);
             return 0;
@@ -239,7 +241,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused, elapsedSeconds, onEnd, addNotification, defaultDuration]);
+  }, [isPaused, elapsedSeconds, onEnd, addNotification, totalDurationSeconds]);
 
   const handlePause = () => {
     setIsPaused(true);
@@ -259,7 +261,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
   };
 
   const progressPercentage =
-    ((defaultDuration - timeRemaining) / defaultDuration) * 100;
+    ((totalDurationSeconds - timeRemaining) / totalDurationSeconds) * 100;
 
   return (
     <div
@@ -277,7 +279,8 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
             </div>
           )}
           <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Started at {format(startTime, "h:mm a")}
+            {sessionDurationMinutes} minute session • Started at{" "}
+            {format(startTime, "h:mm a")}
           </div>
         </div>
 
@@ -285,7 +288,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
         <div className="flex justify-center mb-8">
           <CircularTimer
             timeRemaining={timeRemaining}
-            totalTime={defaultDuration}
+            totalTime={totalDurationSeconds}
             isActive={!isPaused}
             isPaused={isPaused}
             size={240}
@@ -407,7 +410,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
 };
 
 // =============================================================================
-// 🚀 FOCUS SESSION STARTER COMPONENT
+// 🚀 FOCUS SESSION STARTER COMPONENT (FIXED)
 // =============================================================================
 
 interface FocusSessionStarterProps {
@@ -433,7 +436,11 @@ const FocusSessionStarter: React.FC<FocusSessionStarterProps> = ({
   ];
 
   const handleStart = () => {
-    onStart({ taskId: selectedTaskId });
+    // FIXED: Pass the duration to the start function
+    onStart({
+      taskId: selectedTaskId,
+      durationMinutes: duration,
+    });
   };
 
   const selectedTask = selectedTaskId
@@ -763,7 +770,7 @@ const FocusStatsComponent: React.FC<FocusStatsProps> = ({
 };
 
 // =============================================================================
-// 🎯 MAIN FOCUS INTERFACE COMPONENT
+// 🎯 MAIN FOCUS INTERFACE COMPONENT (FIXED)
 // =============================================================================
 
 interface FocusInterfaceProps {
@@ -804,10 +811,12 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
         id: `system-announcement-${Date.now()}`,
         type: "system_announcement",
         title: "Focus Session Started! 🎯",
-        message: "Time to get in the zone and focus!",
+        message: `Time to get in the zone and focus for ${
+          data.durationMinutes || 25
+        } minutes!`,
         read: false,
         createdAt: new Date().toISOString(),
-        userId: "system", // or use actual user ID if available
+        userId: "system",
       });
     }
   };
@@ -826,7 +835,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
           : "Session ended. Every bit of focus counts!",
         read: false,
         createdAt: new Date().toISOString(),
-        userId: "system", // or use actual user ID if available
+        userId: "system",
       });
     }
   };
@@ -840,7 +849,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
       message: "Take a quick break if you need it!",
       read: false,
       createdAt: new Date().toISOString(),
-      userId: "system", // or use actual user ID if available
+      userId: "system",
     });
   };
 
@@ -853,7 +862,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
       message: "Welcome back! Let's keep that momentum going.",
       read: false,
       createdAt: new Date().toISOString(),
-      userId: "system", // or use actual user ID if available
+      userId: "system",
     });
   };
 
@@ -893,7 +902,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
         <FocusStatsComponent stats={stats} todaySummary={todaySummary} />
       )}
 
-      {/* Quick Actions */}
+      {/* Quick Actions (FIXED: Pass duration to quick start buttons) */}
       {!activeSession && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -915,7 +924,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button
-              onClick={() => handleStartSession({})}
+              onClick={() => handleStartSession({ durationMinutes: 25 })}
               disabled={startLoading}
               className="p-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
@@ -925,7 +934,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
             </button>
 
             <button
-              onClick={() => handleStartSession({})}
+              onClick={() => handleStartSession({ durationMinutes: 45 })}
               disabled={startLoading}
               className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
@@ -935,7 +944,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
             </button>
 
             <button
-              onClick={() => handleStartSession({})}
+              onClick={() => handleStartSession({ durationMinutes: 60 })}
               disabled={startLoading}
               className="p-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >

@@ -74,6 +74,7 @@ export interface Task extends BaseEntity {
     description?: string;
     dueTime?: Date;
     completed: boolean;
+    completedAt?: Date | null;
     newTask: boolean;
     priority: TaskPriority;
     status: TaskStatus;

@@ -276,7 +276,7 @@ export const getTodayOverview = async (req: AuthenticatedRequest, res: Response)
                 where: {
                     userId,
                     completed: true,
-                    updatedAt: {
+                    completedAt: {
                         gte: startOfDay,
                         lte: endOfDay
                     }
@@ -452,7 +452,7 @@ export const getProductivityInsights = async (req: AuthenticatedRequest, res: Re
                     where: {
                         userId,
                         completed: true,
-                        updatedAt: { gte: startDate }
+                        completedAt: { gte: startDate }
                     }
                 })
             ]),
@@ -685,7 +685,7 @@ export const getProductivityStats = async (req: AuthenticatedRequest, res: Respo
         const [currentStats, previousStats] = await Promise.all([
             // Current period stats
             Promise.all([
-                prisma.task.count({ where: { userId, completed: true, updatedAt: { gte: startDate } } }),
+                prisma.task.count({ where: { userId, completed: true, completedAt: { gte: startDate } } }),
                 prisma.focusSession.aggregate({
                     where: { userId, completed: true, startTime: { gte: startDate } },
                     _sum: { durationMinutes: true },
@@ -700,7 +700,7 @@ export const getProductivityStats = async (req: AuthenticatedRequest, res: Respo
                     where: {
                         userId,
                         completed: true,
-                        updatedAt: { gte: previousStartDate, lt: startDate }
+                        completedAt: { gte: previousStartDate, lt: startDate }
                     }
                 }),
                 prisma.focusSession.aggregate({

@@ -76,13 +76,16 @@ export const useFocusStore = create<FocusState>()(
                     const response = await apiClient.getActiveFocusSession();
                     console.log('Active session response:', response);
 
-                    const activeSession = response;
+                    // FIXED: Handle the response structure properly
+                    const activeSession = response || response;
 
                     set((state) => {
                         state.activeSession = activeSession ?? null;
                         if (activeSession) {
                             state.isRunning = true;
-                            state.currentDuration = activeSession.currentDuration || 0;
+                            state.currentDuration = activeSession.currentDurationMinutes
+                                ? activeSession.currentDurationMinutes * 60
+                                : activeSession.currentDuration || 0;
 
                             // Start timer if session is active
                             if (!state.timerInterval) {
@@ -107,8 +110,9 @@ export const useFocusStore = create<FocusState>()(
             fetchStats: async (period) => {
                 try {
                     const response = await apiClient.getFocusStats(period);
+                    // FIXED: Handle the response structure properly
                     set((state) => {
-                        state.stats = response || null;
+                        state.stats = response || response || null;
                     });
                 } catch (error) {
                     console.warn('Failed to fetch focus stats:', error);
@@ -118,8 +122,9 @@ export const useFocusStore = create<FocusState>()(
             fetchTodaySummary: async () => {
                 try {
                     const response = await apiClient.getFocusToday();
+                    // FIXED: Handle the response structure properly
                     set((state) => {
-                        state.todaySummary = response || null;
+                        state.todaySummary = response || response || null;
                     });
                 } catch (error) {
                     console.warn('Failed to fetch today summary:', error);
@@ -129,10 +134,16 @@ export const useFocusStore = create<FocusState>()(
             startSession: async (data) => {
                 set((state) => { state.startLoading = true; state.error = null; });
                 try {
+                    console.log('Starting session with data:', data); // Debug log
                     const response = await apiClient.startFocusSession(data);
+                    console.log('Start session response:', response); // Debug log
+
                     if (response) {
+                        // FIXED: Handle the response structure properly
+                        const session = response || response;
+
                         set((state) => {
-                            state.activeSession = response ?? null;
+                            state.activeSession = session ?? null;
                             state.isRunning = true;
                             state.currentDuration = 0;
                             state.startLoading = false;
@@ -144,12 +155,18 @@ export const useFocusStore = create<FocusState>()(
                             }, 1000);
                         });
 
-                        toast.success('Focus session started! 🎯 Stay focused!');
+                        // FIXED: Show duration in toast message
+                        const duration = data?.durationMinutes || 25;
+                        toast.success(`Focus session started! 🎯 Stay focused for ${duration} minutes!`);
+
+                        // Refresh data after starting
+                        get().fetchTodaySummary();
                         return true;
                     }
                     return false;
                 } catch (error) {
                     const apiError = error as ApiError;
+                    console.error('Start session error:', apiError); // Debug log
                     set((state) => {
                         state.startLoading = false;
                         state.error = apiError.message;
@@ -178,9 +195,10 @@ export const useFocusStore = create<FocusState>()(
                         state.currentDuration = 0;
                         state.endLoading = false;
 
-                        // Add completed session to list
-                        if (response) {
-                            state.sessions.unshift(response);
+                        // FIXED: Handle the response structure properly
+                        const session = response || response;
+                        if (session) {
+                            state.sessions.unshift(session);
                         }
                     });
 
@@ -188,6 +206,10 @@ export const useFocusStore = create<FocusState>()(
                         ? `Focus session completed! Great job! 🎉 You focused for ${Math.floor(get().currentDuration / 60)} minutes!`
                         : 'Focus session ended. ⏸️';
                     toast.success(message);
+
+                    // Refresh data after ending
+                    get().fetchStats();
+                    get().fetchTodaySummary();
 
                     return true;
                 } catch (error) {

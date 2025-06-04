@@ -43,7 +43,7 @@ export const useDashboardStore = create<DashboardState>()(
                 try {
                     const response = await apiClient.getDashboardOverview();
                     set((state) => {
-                        state.stats = response.data?.stats || null;
+                        state.stats = response.stats || null;
                         state.statsLoading = false;
                     });
                 } catch (error) {
@@ -60,7 +60,7 @@ export const useDashboardStore = create<DashboardState>()(
                 try {
                     const response = await apiClient.getDashboardToday();
                     set((state) => {
-                        state.overview = response.data || null;
+                        state.overview = response || null;
                         state.overviewLoading = false;
                     });
                 } catch (error) {
@@ -77,7 +77,7 @@ export const useDashboardStore = create<DashboardState>()(
                 try {
                     const response = await apiClient.getProductivityInsights(period);
                     set((state) => {
-                        state.insights = response.data || null;
+                        state.insights = response || null;
                         state.insightsLoading = false;
                     });
                 } catch (error) {

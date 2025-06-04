@@ -346,6 +346,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
             status: TaskStatus;
             listId: string;
             newTask: boolean;
+            completedAt: Date;
         }> = {
             ...(taskName && { taskName }),
             ...(description !== undefined && { description }),
@@ -362,6 +363,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
 
             if (completed) {
                 updateData.status = 'completed';
+                updateData.completedAt = new Date();
 
                 // 🎉 Celebrate task completion
                 await celebrateTaskCompletion(userId, existingTask.taskName, id);
@@ -407,6 +409,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
                     }
                 }
             } else if (status !== 'completed') {
+                updateData.completedAt = undefined;
                 updateData.status = status as TaskStatus;
             }
         }
@@ -663,7 +666,6 @@ export const deleteTaskStep = async (req: AuthenticatedRequest, res: Response): 
 export const getTodayTasks = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
-
         if (!userId) {
             res.status(401).json({
                 error: 'Unauthorized',
@@ -671,12 +673,11 @@ export const getTodayTasks = async (req: AuthenticatedRequest, res: Response): P
             });
             return;
         }
-
         const today = new Date();
         const startOfDay = new Date(today.setHours(0, 0, 0, 0));
         const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-        const [dueTasks, newTasks, completedToday] = await Promise.all([
+        const [dueTasks, newTasks, overdueTasks, completedToday] = await Promise.all([
             // Tasks due today
             prisma.task.findMany({
                 where: {
@@ -708,12 +709,33 @@ export const getTodayTasks = async (req: AuthenticatedRequest, res: Response): P
                 orderBy: { createdAt: 'desc' },
                 take: 10
             }),
-            // Tasks completed today
+            // ADD THIS: Overdue tasks (not completed, due before today)
+            prisma.task.findMany({
+                where: {
+                    userId,
+                    completed: false,
+                    dueTime: {
+                        lt: startOfDay  // Due before today
+                    }
+                },
+                include: {
+                    board: { select: { id: true, name: true, type: true } },
+                    list: { select: { id: true, name: true } },
+                    _count: { select: { steps: true } }
+                },
+                orderBy: { dueTime: 'asc' }, // Show oldest overdue first
+                take: 15 // Limit to prevent overwhelming the user
+            }),
+            // Tasks completed today (that were also due today)
             prisma.task.count({
                 where: {
                     userId,
                     completed: true,
-                    updatedAt: {
+                    dueTime: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    },
+                    completedAt: {
                         gte: startOfDay,
                         lte: endOfDay
                     }
@@ -726,15 +748,16 @@ export const getTodayTasks = async (req: AuthenticatedRequest, res: Response): P
             data: {
                 dueTasks,
                 newTasks,
+                overdueTasks,
                 completedToday,
                 summary: {
                     totalDue: dueTasks.length,
                     totalNew: newTasks.length,
+                    totalOverdue: overdueTasks.length, // ADD THIS
                     totalCompleted: completedToday
                 }
             }
         });
-
     } catch (error) {
         console.error('Get today tasks error:', error);
         res.status(500).json({

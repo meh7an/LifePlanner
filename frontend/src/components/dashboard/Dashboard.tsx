@@ -1,3 +1,7 @@
+// =============================================================================
+// 🏠 COMPLETE DASHBOARD COMPONENT WITH WORKING MODALS
+// =============================================================================
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -12,19 +16,23 @@ import {
   ArrowRight,
   BarChart3,
   Activity,
-  Menu,
-  User,
-  Settings,
-  LogOut,
 } from "lucide-react";
 import { useDashboardStore } from "@/lib/stores/dashboardStore";
 import { useTaskStore } from "@/lib/stores/taskStore";
 import { useFocusStore } from "@/lib/stores/focusStore";
 import { useCalendarStore } from "@/lib/stores/calendarStore";
+import { useBoardStore } from "@/lib/stores/boardStore";
 import { useAuth } from "@/lib/stores/authStore";
 import { useUIStore } from "@/lib/stores/uiStore";
 import { format, isToday, isThisWeek, parseISO } from "date-fns";
-import Image from "next/image";
+import type { Task, Board, CalendarEvent } from "@/lib/types";
+
+// Import modal components - Update these paths to match your project structure
+import TaskComponents from "../tasks/Task";
+import { BoardModal } from "../board/Board";
+import { EventModal } from "../calendar/Calendar";
+
+const { TaskModal } = TaskComponents;
 
 // =============================================================================
 // 📊 STATS CARDS COMPONENT
@@ -36,12 +44,12 @@ const StatsCards: React.FC = () => {
   const statsData = [
     {
       title: "Tasks Completed",
-      value: stats?.tasks.completedToday || 0,
+      value: stats?.tasks.completed || 0,
       total: stats?.tasks.total || 0,
       icon: CheckSquare,
       color: "green",
-      trend: stats?.tasks.completionRate
-        ? `${Math.round(stats.tasks.completionRate)}%`
+      trend: stats?.tasks.completed
+        ? `${Math.round((stats.tasks.completed / stats?.tasks.total) * 100)}%`
         : "0%",
       bgGradient: "from-green-500 to-emerald-600",
     },
@@ -67,14 +75,14 @@ const StatsCards: React.FC = () => {
     },
     {
       title: "Productivity Score",
-      value: stats?.productivity.score || 0,
+      value: stats?.productivity || 0,
       unit: "/100",
       icon: TrendingUp,
       color: "orange",
       trend:
-        stats?.productivity.trend === "up"
+        stats?.productivity?.trend === "up"
           ? "↗️ Rising"
-          : stats?.productivity.trend === "down"
+          : stats?.productivity?.trend === "down"
           ? "↘️ Falling"
           : "➡️ Stable",
       bgGradient: "from-orange-500 to-red-600",
@@ -98,7 +106,9 @@ const StatsCards: React.FC = () => {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.value}
+                  {typeof stat.value === "number"
+                    ? stat.value
+                    : stat.value.score}
                   {stat.unit && (
                     <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
                       {stat.unit}
@@ -129,12 +139,30 @@ const StatsCards: React.FC = () => {
 // 📋 TODAY'S TASKS COMPONENT
 // =============================================================================
 
-const TodaysTasks: React.FC = () => {
-  const { todayTasks, toggleTaskComplete } = useTaskStore();
-  const { openModal } = useUIStore();
+interface TodaysTasksProps {
+  onOpenTaskModal: () => void;
+}
+
+const TodaysTasks: React.FC<TodaysTasksProps> = ({ onOpenTaskModal }) => {
+  const { todayTasks, toggleTaskComplete, fetchTodayTasks } = useTaskStore();
 
   const dueTasks = todayTasks?.dueTasks || [];
-  const completedToday = todayTasks?.completedToday || [];
+  const newTasks = todayTasks?.newTasks || [];
+  const overdueTasks = todayTasks?.overdueTasks || [];
+  const completedTodayCount = todayTasks?.completedToday || 0; // This is a number
+  const totalTasks = todayTasks?.summary?.totalDue || 0;
+
+  // Combine due tasks and new tasks for display
+  const allTasks = [...overdueTasks, ...dueTasks, ...newTasks];
+
+  // Handle task completion toggle with UI refresh
+  const handleToggleComplete = async (taskId: string) => {
+    const success = await toggleTaskComplete(taskId);
+    if (success) {
+      // Refresh today's tasks to update the UI
+      await fetchTodayTasks();
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
@@ -144,7 +172,7 @@ const TodaysTasks: React.FC = () => {
           Today&apos;s Tasks
         </h2>
         <button
-          onClick={() => openModal("taskModal")}
+          onClick={onOpenTaskModal}
           className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -152,7 +180,7 @@ const TodaysTasks: React.FC = () => {
       </div>
 
       <div className="space-y-3">
-        {dueTasks.length === 0 ? (
+        {allTasks.length === 0 ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckSquare className="w-8 h-8 text-green-500" />
@@ -164,7 +192,7 @@ const TodaysTasks: React.FC = () => {
               You have no tasks due today. Great job!
             </p>
             <button
-              onClick={() => openModal("taskModal")}
+              onClick={onOpenTaskModal}
               className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -173,13 +201,13 @@ const TodaysTasks: React.FC = () => {
           </div>
         ) : (
           <>
-            {dueTasks.slice(0, 5).map((task) => (
+            {allTasks.slice(0, 5).map((task) => (
               <div
                 key={task.id}
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
               >
                 <button
-                  onClick={() => toggleTaskComplete(task.id)}
+                  onClick={() => handleToggleComplete(task.id)}
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                     task.completed
                       ? "bg-green-500 border-green-500"
@@ -203,20 +231,40 @@ const TodaysTasks: React.FC = () => {
                   )}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <p
-                    className={`text-sm font-medium ${
-                      task.completed
-                        ? "line-through text-gray-500 dark:text-gray-400"
-                        : "text-gray-900 dark:text-white"
-                    }`}
-                  >
-                    {task.taskName}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <p
+                      className={`text-sm font-medium ${
+                        task.completed
+                          ? "line-through text-gray-500 dark:text-gray-400"
+                          : "text-gray-900 dark:text-white"
+                      }`}
+                    >
+                      {task.taskName}
+                    </p>
+                    {task.newTask && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 text-xs font-medium rounded-full">
+                        New
+                      </span>
+                    )}
+                  </div>
                   {task.dueTime && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Due: {format(parseISO(task.dueTime), "h:mm a")}
                     </p>
                   )}
+                  {task.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {task.description}
+                    </p>
+                  )}
+                  {task.dueTime &&
+                    new Date(task.dueTime).getTime() <
+                      new Date().setHours(0, 0, 0, 0) &&
+                    !task.completed && (
+                      <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-xs font-medium rounded-full">
+                        Overdue
+                      </span>
+                    )}
                 </div>
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -232,10 +280,10 @@ const TodaysTasks: React.FC = () => {
               </div>
             ))}
 
-            {dueTasks.length > 5 && (
+            {allTasks.length > 5 && (
               <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                 <button className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 flex items-center">
-                  View {dueTasks.length - 5} more tasks
+                  View {allTasks.length - 5} more tasks
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </button>
               </div>
@@ -245,14 +293,15 @@ const TodaysTasks: React.FC = () => {
       </div>
 
       {/* Completed Tasks Summary */}
-      {completedToday.length > 0 && (
+      {totalTasks > 0 && (
         <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">
               Completed today
             </span>
             <span className="text-green-600 dark:text-green-400 font-medium">
-              {completedToday.length} tasks ✨
+              {completedTodayCount}/{totalTasks} task
+              {completedTodayCount > 1 ? "s" : ""} ✨
             </span>
           </div>
         </div>
@@ -265,9 +314,14 @@ const TodaysTasks: React.FC = () => {
 // 📅 UPCOMING EVENTS COMPONENT
 // =============================================================================
 
-const UpcomingEvents: React.FC = () => {
+interface UpcomingEventsProps {
+  onOpenEventModal: () => void;
+}
+
+const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
+  onOpenEventModal,
+}) => {
   const { events } = useCalendarStore();
-  const { openModal } = useUIStore();
 
   // Filter upcoming events (next 7 days)
   const upcomingEvents = events
@@ -291,7 +345,7 @@ const UpcomingEvents: React.FC = () => {
           Upcoming Events
         </h2>
         <button
-          onClick={() => openModal("eventModal")}
+          onClick={onOpenEventModal}
           className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -311,7 +365,7 @@ const UpcomingEvents: React.FC = () => {
               Your calendar is clear for the next week.
             </p>
             <button
-              onClick={() => openModal("eventModal")}
+              onClick={onOpenEventModal}
               className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:from-blue-600 hover:to-cyan-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -509,27 +563,27 @@ const QuickInsights: React.FC = () => {
   const insightData = [
     {
       title: "Most Productive Hour",
-      value: insights?.patterns.mostProductiveHours?.[0]
-        ? `${insights.patterns.mostProductiveHours[0]}:00`
+      value: insights?.patterns.bestFocusHour
+        ? `${insights.patterns.bestFocusHour}:00`
         : "N/A",
       icon: Clock,
       color: "blue",
     },
     {
-      title: "Daily Task Average",
-      value: Math.round(insights?.patterns.averageTasksPerDay || 0),
+      title: "Focus Minutes/Hour",
+      value: Math.round(insights?.patterns.averageFocusMinutesPerHour || 0),
       icon: Target,
       color: "green",
     },
     {
-      title: "Focus Time Today",
-      value: `${Math.round(insights?.patterns.averageFocusTimePerDay || 0)}min`,
+      title: "Session Average",
+      value: `${Math.round(insights?.summary.averageSessionLength || 0)}min`,
       icon: Zap,
       color: "orange",
     },
     {
-      title: "Weekly Streak",
-      value: insights?.trends.tasksCompleted?.length || 0,
+      title: "Completion Rate",
+      value: `${insights?.summary.completionRate || 0}%`,
       icon: Activity,
       color: "purple",
     },
@@ -584,7 +638,7 @@ const QuickInsights: React.FC = () => {
         })}
       </div>
 
-      {/* Recommendations */}
+      {/* Enhanced Recommendations with more context */}
       {insights?.recommendations && insights.recommendations.length > 0 && (
         <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
@@ -611,8 +665,17 @@ const QuickInsights: React.FC = () => {
 // 🎯 QUICK ACTIONS COMPONENT
 // =============================================================================
 
-const QuickActions: React.FC = () => {
-  const { openModal } = useUIStore();
+interface QuickActionsProps {
+  onOpenTaskModal: () => void;
+  onOpenEventModal: () => void;
+  onOpenBoardModal: () => void;
+}
+
+const QuickActions: React.FC<QuickActionsProps> = ({
+  onOpenTaskModal,
+  onOpenEventModal,
+  onOpenBoardModal,
+}) => {
   const { startSession } = useFocusStore();
 
   const actions = [
@@ -621,7 +684,7 @@ const QuickActions: React.FC = () => {
       description: "Add a task to your list",
       icon: Plus,
       color: "green",
-      action: () => openModal("taskModal"),
+      action: onOpenTaskModal,
     },
     {
       title: "Start Focus",
@@ -635,14 +698,14 @@ const QuickActions: React.FC = () => {
       description: "Schedule a calendar event",
       icon: Calendar,
       color: "blue",
-      action: () => openModal("eventModal"),
+      action: onOpenEventModal,
     },
     {
       title: "New Board",
       description: "Create a project board",
       icon: BarChart3,
       color: "purple",
-      action: () => openModal("boardModal"),
+      action: onOpenBoardModal,
     },
   ];
 
@@ -702,10 +765,19 @@ const Dashboard: React.FC = () => {
   const { fetchStats, fetchOverview, fetchInsights } = useDashboardStore();
   const { fetchTodayTasks } = useTaskStore();
   const { fetchActiveSession, fetchTodaySummary } = useFocusStore();
-  const { fetchEvents } = useCalendarStore();
+  const { fetchEvents, fetchCalendars, calendars } = useCalendarStore();
+  const { fetchBoards } = useBoardStore();
   const { user } = useAuth();
+  const { modals, openModal, closeModal } = useUIStore();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Modal states for dashboard
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
 
   // Dark mode detection
   useEffect(() => {
@@ -729,6 +801,8 @@ const Dashboard: React.FC = () => {
         fetchActiveSession(),
         fetchTodaySummary(),
         fetchEvents(),
+        fetchCalendars(),
+        fetchBoards(),
       ]);
     };
 
@@ -741,7 +815,48 @@ const Dashboard: React.FC = () => {
     fetchActiveSession,
     fetchTodaySummary,
     fetchEvents,
+    fetchCalendars,
+    fetchBoards,
   ]);
+
+  // Modal handlers
+  const handleOpenTaskModal = () => {
+    setSelectedTask(null);
+    openModal("taskModal");
+  };
+
+  const handleOpenBoardModal = () => {
+    setSelectedBoard(null);
+    openModal("boardModal");
+  };
+
+  const handleOpenEventModal = () => {
+    setSelectedEvent(null);
+    openModal("eventModal");
+  };
+
+  const handleCloseTaskModal = () => {
+    setSelectedTask(null);
+    closeModal("taskModal");
+    // Refresh data after task creation/edit
+    fetchTodayTasks();
+    fetchStats();
+  };
+
+  const handleCloseBoardModal = () => {
+    setSelectedBoard(null);
+    closeModal("boardModal");
+    // Refresh data after board creation/edit
+    fetchBoards();
+    fetchStats();
+  };
+
+  const handleCloseEventModal = () => {
+    setSelectedEvent(null);
+    closeModal("eventModal");
+    // Refresh data after event creation/edit
+    fetchEvents();
+  };
 
   // Get greeting based on time of day
   const getGreeting = () => {
@@ -775,249 +890,43 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Left Column - Tasks and Events */}
           <div className="lg:col-span-2 space-y-6">
-            <TodaysTasks />
-            <UpcomingEvents />
+            <TodaysTasks onOpenTaskModal={handleOpenTaskModal} />
+            <UpcomingEvents onOpenEventModal={handleOpenEventModal} />
           </div>
 
           {/* Right Column - Focus and Insights */}
           <div className="space-y-6">
             <ActiveFocusSession />
             <QuickInsights />
-            <QuickActions />
+            <QuickActions
+              onOpenTaskModal={handleOpenTaskModal}
+              onOpenEventModal={handleOpenEventModal}
+              onOpenBoardModal={handleOpenBoardModal}
+            />
           </div>
         </div>
+
+        {/* Modal Components */}
+        <TaskModal
+          isOpen={modals.taskModal}
+          onClose={handleCloseTaskModal}
+          task={selectedTask}
+        />
+
+        <BoardModal
+          isOpen={modals.boardModal}
+          onClose={handleCloseBoardModal}
+          board={selectedBoard}
+        />
+
+        <EventModal
+          isOpen={modals.eventModal}
+          onClose={handleCloseEventModal}
+          event={selectedEvent}
+          selectedDate={new Date()}
+          calendarId={calendars[0]?.id || "default"}
+        />
       </div>
-    </div>
-  );
-};
-
-// =============================================================================
-// 📱 DASHBOARD LAYOUT COMPONENT
-// =============================================================================
-
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { sidebarOpen, toggleSidebar } = useUIStore();
-  const { user, logout } = useAuth();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDarkMode(mediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
-  const getUserInitials = () => {
-    if (!user) return "";
-    const names = user.username.split(" ");
-    if (names.length >= 2) {
-      return (names[0][0] + names[1][0]).toUpperCase();
-    }
-    return user.username.slice(0, 2).toUpperCase();
-  };
-
-  const sidebarItems = [
-    { icon: "🏠", label: "Dashboard", href: "/dashboard" },
-    { icon: "📋", label: "Tasks", href: "/dashboard/tasks", badge: "12" },
-    { icon: "📅", label: "Calendar", href: "/dashboard/calendar" },
-    { icon: "⚡", label: "Focus", href: "/dashboard/focus", badge: "2h" },
-    { icon: "📊", label: "Boards", href: "/dashboard/boards", badge: "3" },
-    { icon: "📈", label: "Analytics", href: "/dashboard/analytics" },
-    { icon: "🗂️", label: "Archives", href: "/dashboard/archives" },
-    { icon: "👥", label: "Shared", href: "/dashboard/shared" },
-  ];
-
-  return (
-    <div
-      className={`h-screen flex transition-colors duration-300 ${
-        isDarkMode ? "dark" : ""
-      }`}
-    >
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-16"
-        } bg-white dark:bg-gray-800 border-r border-green-100 dark:border-green-800/30 transition-all duration-300 flex flex-col`}
-      >
-        {/* Logo */}
-        <div className="p-4 border-b border-green-100 dark:border-green-800/30">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            {sidebarOpen && (
-              <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                Life Planner
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
-          {sidebarItems.map((item, index) => (
-            <a
-              key={index}
-              href={item.href}
-              className="w-full flex items-center justify-between px-3 py-3 text-left rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors group"
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-lg">{item.icon}</span>
-                {sidebarOpen && (
-                  <span className="text-gray-700 dark:text-gray-300 group-hover:text-green-600 dark:group-hover:text-green-400 font-medium">
-                    {item.label}
-                  </span>
-                )}
-              </div>
-              {sidebarOpen && item.badge && (
-                <span className="bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 px-2 py-1 rounded-full text-xs font-medium">
-                  {item.badge}
-                </span>
-              )}
-            </a>
-          ))}
-        </nav>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-green-100 dark:border-green-800/30 relative">
-          <button
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-          >
-            <div className="relative">
-              {user?.profilePicture ? (
-                <Image
-                  src={user.profilePicture}
-                  alt={user.username}
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-green-200 dark:border-green-700"
-                />
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {getUserInitials()}
-                  </span>
-                </div>
-              )}
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1 text-left">
-                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.username}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  Premium Plan
-                </div>
-              </div>
-            )}
-          </button>
-
-          {/* Profile Dropdown */}
-          {profileDropdownOpen && sidebarOpen && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-green-100 dark:border-green-800/30 py-2">
-              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center space-x-3 transition-colors">
-                <User className="w-4 h-4" />
-                <span>Profile Settings</span>
-              </button>
-              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center space-x-3 transition-colors">
-                <Settings className="w-4 h-4" />
-                <span>Preferences</span>
-              </button>
-              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-              <button
-                onClick={logout}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-green-100 dark:border-green-800/30 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={toggleSidebar}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center space-x-4">
-              {/* Notifications Bell */}
-              <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors relative">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-5 5v-5zM19.95 10.36c.03-.16.05-.33.05-.5a8 8 0 10-16 0c0 4.42 3.58 8 8 8 .17 0 .34-.02.5-.05"
-                  />
-                </svg>
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </button>
-
-              {/* Search */}
-              <div className="relative hidden md:block">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <svg
-                  className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <div className="flex-1 overflow-auto">{children}</div>
-      </main>
     </div>
   );
 };
@@ -1027,4 +936,4 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 // =============================================================================
 
 export default Dashboard;
-export { Dashboard, DashboardLayout };
+export { Dashboard };

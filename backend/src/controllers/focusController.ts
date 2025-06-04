@@ -180,7 +180,8 @@ export const getFocusSession = async (req: AuthenticatedRequest, res: Response):
 export const startFocusSession = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
-        const { taskId } = req.body;
+        // FIXED: Extract durationMinutes from request body
+        const { taskId, durationMinutes = 25 } = req.body;
 
         if (!userId) {
             res.status(401).json({
@@ -266,9 +267,11 @@ export const startFocusSession = async (req: AuthenticatedRequest, res: Response
             }
         }
 
+        // FIXED: Include durationMinutes in the session creation
         const session = await prisma.focusSession.create({
             data: {
                 startTime: new Date(),
+                durationMinutes: durationMinutes, // Store the planned duration
                 userId,
                 taskId
             },
@@ -289,7 +292,7 @@ export const startFocusSession = async (req: AuthenticatedRequest, res: Response
         });
 
         res.status(201).json({
-            message: 'Focus session started! Time to get in the zone! 🎯',
+            message: `Focus session started! Time to get in the zone for ${durationMinutes} minutes! 🎯`,
             session
         });
 

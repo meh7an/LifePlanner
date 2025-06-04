@@ -129,6 +129,7 @@ export interface Task {
     description?: string;
     dueTime?: string;
     completed: boolean;
+    completedAt?: string;
     newTask: boolean;
     priority: 'low' | 'medium' | 'high';
     status: 'todo' | 'in_progress' | 'completed' | 'canceled';
@@ -206,7 +207,8 @@ export interface TaskFilters {
 export interface TodayTasksOverview {
     dueTasks: Task[];
     newTasks: Task[];
-    completedToday: Task[];
+    overdueTasks: Task[];
+    completedToday: number;
     summary: {
         totalDue: number;
         totalNew: number;
@@ -321,6 +323,7 @@ export interface FocusSession {
     task?: Task;
     isActive?: boolean;
     currentDuration?: number;
+    currentDurationMinutes?: number;
 }
 
 export interface PaginatedFocusSessions extends PaginatedResponse {
@@ -329,6 +332,7 @@ export interface PaginatedFocusSessions extends PaginatedResponse {
 
 export interface StartFocusRequest {
     taskId?: string;
+    durationMinutes?: number;
 }
 
 export interface EndFocusRequest {
@@ -873,22 +877,47 @@ export interface DashboardOverview {
 
 export interface ProductivityInsights {
     patterns: {
-        mostProductiveHours: number[];
+        bestFocusHour: number; // Changed from mostProductiveHours
+        averageFocusMinutesPerHour: number; // Changed from averageFocusTimePerDay
         mostProductiveDays: string[];
-        averageTasksPerDay: number;
-        averageFocusTimePerDay: number;
+        peakProductivityTime: string; // Added this new field
+        // Remove averageTasksPerDay since it's not in your API response
     };
     recommendations: string[];
-    achievements: Array<{
+    achievements?: Array<{
         type: string;
         title: string;
         description: string;
         unlockedAt: string;
-    }>;
-    trends: {
+    }>; // Made optional since it's not in your current response
+    trends?: {
         tasksCompleted: Array<{ date: string; count: number }>;
         focusMinutes: Array<{ date: string; minutes: number }>;
         productivityScore: Array<{ date: string; score: number }>;
+    }; // Made optional since it's not in your current response
+
+    // Add the new fields from your actual API response
+    summary: {
+        completionRate: number;
+        totalFocusMinutes: number;
+        averageSessionLength: number;
+        overdueTasksCount: number;
+    };
+    activity: {
+        mostActiveBoards: Array<{
+            board: {
+                id: string;
+                name: string;
+                type: string;
+            };
+            taskCount: number;
+        }>;
+        currentStreaks: Array<{
+            type: string;
+            current: number;
+            longest: number;
+            lastUpdate: string;
+        }>;
     };
 }
 

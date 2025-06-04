@@ -75,6 +75,8 @@ export const useTaskStore = create<TaskState>()(
             fetchTodayTasks: async () => {
                 try {
                     const response = await apiClient.getTodayTasks();
+                    console.log('Fetched today tasks:', response);
+
                     set((state) => {
                         state.todayTasks = response || null;
                     });
