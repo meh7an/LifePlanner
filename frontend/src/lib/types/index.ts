@@ -246,6 +246,10 @@ export interface CalendarEvent {
     task?: Task;
 }
 
+export interface PaginatedCalendarEvents extends PaginatedResponse {
+    events: CalendarEvent[];
+}
+
 export interface CreateCalendarRequest {
     name: string;
     startDate?: string;
@@ -319,6 +323,10 @@ export interface FocusSession {
     currentDuration?: number;
 }
 
+export interface PaginatedFocusSessions extends PaginatedResponse {
+    sessions: FocusSession[];
+}
+
 export interface StartFocusRequest {
     taskId?: string;
 }
@@ -370,6 +378,10 @@ export interface Note {
     task?: Task;
 }
 
+export interface PaginatedNotes extends PaginatedResponse {
+    notes: Note[];
+}
+
 export interface CreateNoteRequest {
     content: string;
 }
@@ -414,6 +426,10 @@ export interface Post {
     hasArchive?: boolean;
 }
 
+export interface PaginatedPosts extends PaginatedResponse {
+    posts: Post[];
+}
+
 export interface Memory {
     id: string;
     createdAt: string;
@@ -422,12 +438,20 @@ export interface Memory {
     post?: Post;
 }
 
+export interface PaginatedMemories extends PaginatedResponse {
+    memories: Memory[];
+}
+
 export interface Archive {
     id: string;
     archiveDate: string;
     category: string;
     postId: string;
     post?: Post;
+}
+
+export interface PaginatedArchives extends PaginatedResponse {
+    archives: Archive[];
 }
 
 export interface CreatePostRequest {
@@ -473,6 +497,10 @@ export interface Repeat {
     createdAt: string;
     updatedAt: string;
     task?: Task;
+}
+
+export interface PaginatedRepeats extends PaginatedResponse {
+    repeats: Repeat[];
 }
 
 export interface CreateRepeatRequest {
@@ -601,6 +629,10 @@ export interface View {
     updatedAt: string;
 }
 
+export interface PaginatedViews extends PaginatedResponse {
+    views: View[];
+}
+
 export interface CreateViewRequest {
     viewType: View['viewType'];
     name: string;
@@ -640,6 +672,10 @@ export interface Share {
     ownerUser?: User;
     sharedWithUser?: User;
     resource?: Task | Board | Calendar;
+}
+
+export interface PaginatedShares extends PaginatedResponse {
+    shares: Share[];
 }
 
 export interface CreateShareRequest {
@@ -763,6 +799,10 @@ export interface Notification {
     relatedResourceType?: string;
     relatedResourceId?: string;
     metadata?: NotificationMetadata;
+}
+
+export interface PaginatedNotifications extends PaginatedResponse {
+    notifications: Notification[];
 }
 
 export interface NotificationStats {
