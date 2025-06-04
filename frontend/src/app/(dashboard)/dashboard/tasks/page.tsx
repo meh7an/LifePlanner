@@ -10,24 +10,25 @@ export default function TasksPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
-              Task Management
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Organize, prioritize, and complete your tasks efficiently
-            </p>
-          </div>
+        {/* Title and subtitle */}
+        <div className="mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+            Task Management
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-base">
+            Organize, prioritize, and complete your tasks efficiently
+          </p>
+        </div>
 
-          {/* View Toggle */}
-          <div className="flex items-center space-x-2">
+        {/* View Toggle - Mobile: Full width tabs, Desktop: Right aligned buttons */}
+        <div className="sm:flex sm:justify-end">
+          <div className="flex w-full sm:w-auto bg-gray-100 dark:bg-gray-800 p-1 rounded-lg sm:bg-transparent sm:dark:bg-transparent sm:p-0 sm:space-x-2">
             <button
               onClick={() => setView("list")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start space-x-2 px-4 py-3 sm:py-2 rounded-lg font-medium transition-all duration-200 ${
                 view === "list"
-                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-700"
+                  ? "bg-white dark:bg-gray-700 sm:bg-gradient-to-r sm:from-green-500 sm:to-emerald-600 text-gray-900 dark:text-white sm:text-white shadow-sm sm:shadow-lg"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white sm:bg-white sm:dark:bg-gray-800 sm:text-gray-700 sm:dark:text-gray-300 sm:hover:bg-green-50 sm:dark:hover:bg-green-900/20 sm:border sm:border-gray-200 sm:dark:border-gray-700"
               }`}
             >
               <svg
@@ -47,10 +48,10 @@ export default function TasksPage() {
             </button>
             <button
               onClick={() => setView("board")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start space-x-2 px-4 py-3 sm:py-2 rounded-lg font-medium transition-all duration-200 ${
                 view === "board"
-                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-700"
+                  ? "bg-white dark:bg-gray-700 sm:bg-gradient-to-r sm:from-green-500 sm:to-emerald-600 text-gray-900 dark:text-white sm:text-white shadow-sm sm:shadow-lg"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white sm:bg-white sm:dark:bg-gray-800 sm:text-gray-700 sm:dark:text-gray-300 sm:hover:bg-green-50 sm:dark:hover:bg-green-900/20 sm:border sm:border-gray-200 sm:dark:border-gray-700"
               }`}
             >
               <svg

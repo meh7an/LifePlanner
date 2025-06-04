@@ -568,7 +568,7 @@ const AdvancedAnalyticsDashboard = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${
+      className={`min-h-screen transition-colors duration-300 overflow-x-hidden ${
         isDarkMode ? "dark" : ""
       }`}
     >
@@ -603,32 +603,34 @@ const AdvancedAnalyticsDashboard = () => {
                 </div>
               </div>
 
-              {/* Period Selector */}
-              <div className="flex items-center space-x-2">
-                {periods.map((period) => (
-                  <button
-                    key={period.id}
-                    onClick={() => setSelectedPeriod(period.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      selectedPeriod === period.id
-                        ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
-                        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-700"
-                    }`}
-                  >
-                    {period.label}
-                  </button>
-                ))}
+              {/* Period Selector - Made scrollable on mobile */}
+              <div className="overflow-x-auto">
+                <div className="flex items-center space-x-2 min-w-max">
+                  {periods.map((period) => (
+                    <button
+                      key={period.id}
+                      onClick={() => setSelectedPeriod(period.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                        selectedPeriod === period.id
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
+                          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-700"
+                      }`}
+                    >
+                      {period.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="mt-6 border-b border-green-100 dark:border-green-800/30">
-              <nav className="flex space-x-8">
+            {/* Tab Navigation - Fixed for mobile scrolling */}
+            <div className="mt-6 border-b border-green-100 dark:border-green-800/30 overflow-x-auto">
+              <nav className="flex space-x-8 min-w-max">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center space-x-2 ${
+                    className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center space-x-2 whitespace-nowrap ${
                       activeTab === tab.id
                         ? "border-green-500 text-green-600 dark:text-green-400"
                         : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -819,14 +821,98 @@ const AdvancedAnalyticsDashboard = () => {
           {/* Other tabs implementation continues... */}
           {activeTab === "productivity" && (
             <div className="space-y-8">
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  Productivity Analysis
+              {/* Productivity Score Chart */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-100 dark:border-green-800/30">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Productivity Score Over Time
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Real productivity insights coming from your actual data, Mr
-                  Genius! 🚀
-                </p>
+                <ResponsiveContainer width="100%" height={400}>
+                  <AreaChart data={analyticsData.productivityScore}>
+                    <defs>
+                      <linearGradient
+                        id="productivityGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor={chartColors.primary}
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor={chartColors.primary}
+                          stopOpacity={0.1}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={isDarkMode ? "#374151" : "#E5E7EB"}
+                    />
+                    <XAxis
+                      dataKey="date"
+                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+                      fontSize={12}
+                    />
+                    <YAxis
+                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+                      fontSize={12}
+                      domain={[0, 100]}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="score"
+                      stroke={chartColors.primary}
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#productivityGradient)"
+                      name="Productivity Score"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Hourly Activity */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-100 dark:border-green-800/30">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Activity by Hour of Day
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={analyticsData.hourlyActivity}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={isDarkMode ? "#374151" : "#E5E7EB"}
+                    />
+                    <XAxis
+                      dataKey="hour"
+                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+                      fontSize={12}
+                      tickFormatter={(hour) => `${hour}:00`}
+                    />
+                    <YAxis
+                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+                      fontSize={12}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar
+                      dataKey="tasks"
+                      fill={chartColors.primary}
+                      name="Tasks"
+                      radius={[2, 2, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="focus"
+                      fill={chartColors.secondary}
+                      name="Focus (min)"
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}
@@ -1189,105 +1275,6 @@ const AdvancedAnalyticsDashboard = () => {
                         </div>
                       ))}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Productivity Tab */}
-          {activeTab === "productivity" && (
-            <div className="space-y-8">
-              {/* Productivity Score Chart */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-100 dark:border-green-800/30">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Productivity Score Over Time
-                </h3>
-                <ResponsiveContainer width="100%" height={400}>
-                  <AreaChart data={analyticsData.productivityScore}>
-                    <defs>
-                      <linearGradient
-                        id="productivityGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor={chartColors.primary}
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor={chartColors.primary}
-                          stopOpacity={0.1}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke={isDarkMode ? "#374151" : "#E5E7EB"}
-                    />
-                    <XAxis
-                      dataKey="date"
-                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
-                      fontSize={12}
-                      domain={[0, 100]}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area
-                      type="monotone"
-                      dataKey="score"
-                      stroke={chartColors.primary}
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#productivityGradient)"
-                      name="Productivity Score"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Hourly Activity */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-100 dark:border-green-800/30">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Activity by Hour of Day
-                </h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analyticsData.hourlyActivity}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke={isDarkMode ? "#374151" : "#E5E7EB"}
-                    />
-                    <XAxis
-                      dataKey="hour"
-                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
-                      fontSize={12}
-                      tickFormatter={(hour) => `${hour}:00`}
-                    />
-                    <YAxis
-                      stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
-                      fontSize={12}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Bar
-                      dataKey="tasks"
-                      fill={chartColors.primary}
-                      name="Tasks"
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="focus"
-                      fill={chartColors.secondary}
-                      name="Focus (min)"
-                      radius={[2, 2, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </div>
           )}
