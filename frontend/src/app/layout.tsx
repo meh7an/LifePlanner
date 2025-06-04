@@ -8,14 +8,13 @@ import { Toaster } from "react-hot-toast";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lokical.com"),
   title: "Life Planner - Your Productivity Companion",
   description:
     "Transform chaos into clarity with boards, tasks, calendars, and focus sessions all in one beautiful workspace.",
   keywords:
     "productivity, task management, calendar, focus timer, kanban, planning",
   authors: [{ name: "Life Planner Team" }],
-  viewport: "width=device-width, initial-scale=1",
-  themeColor: "#10B981",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -45,6 +44,15 @@ export const metadata: Metadata = {
       "Transform chaos into clarity with comprehensive productivity tools",
     images: ["/twitter-image.png"],
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: "no",
+  viewportFit: "cover",
+  themeColor: "#10B981",
 };
 
 export default function RootLayout({

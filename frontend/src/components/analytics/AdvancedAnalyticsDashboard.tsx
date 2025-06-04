@@ -189,7 +189,6 @@ const AdvancedAnalyticsDashboard = () => {
     });
 
     const score = dashStats?.productivity?.score || 0;
-    const trend = dashStats?.productivity?.trend || "stable";
 
     // Generate boards activity from real boards data
     const boardsActivity = boards.map((board) => {
@@ -394,7 +393,6 @@ const AdvancedAnalyticsDashboard = () => {
     selectedPeriod,
     tasks,
     dashStats?.productivity?.score,
-    dashStats?.productivity?.trend,
     dashStats?.productivity?.weeklyComparison,
     boards,
     sessions,
