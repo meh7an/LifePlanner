@@ -414,7 +414,7 @@ export interface Streak extends BaseEntity {
     userId: string;
 }
 
-export type StreakType = 'daily_tasks' | 'focus_sessions';
+export type StreakType = 'daily_tasks' | 'focus_sessions' | 'calendar_events' | 'custom';
 
 // API Response Types
 export interface ApiResponse<T = any> {
@@ -514,7 +514,7 @@ export interface NoteFilters {
     endDate?: string;
 }
 
-// Dashboard Types
+// 🚀 UPDATED DASHBOARD TYPES WITH PRODUCTIVITY SCORING
 export interface DashboardStats {
     tasks: {
         total: number;
@@ -522,29 +522,103 @@ export interface DashboardStats {
         pending: number;
         overdue: number;
         dueToday: number;
+        newToday: number;
+        completedToday: number;
+        completionRate: number;
     };
     focus: {
+        totalMinutes: number;
+        totalSessions: number;
         todayMinutes: number;
-        weeklyMinutes: number;
+        todaySessions: number;
+        averageSessionLength: number;
+        longestSession: number;
+        longestStreak: number;
         currentStreak: number;
+        completionRate: number;
         activeSession?: FocusSessionWithTask;
     };
     boards: {
         total: number;
         active: number;
         archived: number;
+        averageTasksPerBoard: number;
     };
     calendar: {
-        upcomingEvents: number;
+        totalEvents: number;
         todayEvents: number;
+        upcomingEvents: number;
+        overdueEvents: number;
     };
     notes: {
         total: number;
         thisWeek: number;
+        thisMonth: number;
     };
-    streaks: {
-        tasks: number;
-        focus: number;
+    streaks: Array<{
+        type: string;
+        current: number;
+        longest: number;
+    }>;
+    productivity: {
+        score: number;
+        trend: 'up' | 'down' | 'stable';
+        weeklyComparison: number;
+    };
+}
+
+// Enhanced productivity insights interface
+export interface ProductivityInsights {
+    period: 'week' | 'month';
+    summary: {
+        completionRate: number;
+        totalFocusMinutes: number;
+        averageSessionLength: number;
+        overdueTasksCount: number;
+    };
+    patterns: {
+        bestFocusHour: number;
+        averageFocusMinutesPerHour: number;
+        mostProductiveDays: string[];
+        peakProductivityTime: string;
+    };
+    activity: {
+        mostActiveBoards: Array<{
+            board: {
+                id: string;
+                name: string;
+                type: string;
+            } | null;
+            taskCount: number;
+        }>;
+        currentStreaks: Array<{
+            type: string;
+            current: number;
+            longest: number;
+            lastUpdate: Date;
+        }>;
+    };
+    recommendations: string[];
+}
+
+// Enhanced dashboard overview interface
+export interface DashboardOverview {
+    stats: DashboardStats;
+    todayTasks: TaskWithDetails[];
+    upcomingEvents: CalendarEventWithDetails[];
+    activeSession?: FocusSessionWithTask;
+    recentNotes: NoteWithTask[];
+    streaks: Array<{
+        type: string;
+        current: number;
+        longest: number;
+    }>;
+    notifications?: any[]; // You can define Notification type if needed
+    productivity: {
+        score: number;
+        trend: 'up' | 'down' | 'stable';
+        weeklyComparison: number;
+        recommendations: string[];
     };
 }
 
@@ -558,6 +632,47 @@ export interface TodayOverview {
     events: CalendarEventWithDetails[];
     focusSummary: FocusSummary;
     recentNotes: NoteWithTask[];
+}
+
+// Productivity calculation types
+export interface ProductivityScoreComponents {
+    completionScore: number;
+    focusScore: number;
+    weeklyFocusScore: number;
+    streakBonus: number;
+    overduePenalty: number;
+    finalScore: number;
+}
+
+export interface ProductivityTrend {
+    current: number;
+    previous: number;
+    change: number;
+    changePercentage: number;
+    trend: 'up' | 'down' | 'stable';
+}
+
+// Productivity stats comparison interface
+export interface ProductivityStatsComparison {
+    period: 'week' | 'month' | 'year';
+    current: {
+        tasksCompleted: number;
+        focusMinutes: number;
+        focusSessions: number;
+        notesCreated: number;
+    };
+    previous: {
+        tasksCompleted: number;
+        focusMinutes: number;
+        focusSessions: number;
+        notesCreated: number;
+    };
+    changes: {
+        tasks: { value: number; percentage: number };
+        focus: { value: number; percentage: number };
+        sessions: { value: number; percentage: number };
+        notes: { value: number; percentage: number };
+    };
 }
 
 // Error Types

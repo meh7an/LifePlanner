@@ -11,6 +11,85 @@ import {
     ApiResponse
 } from '../types';
 
+// Helper function to calculate productivity score
+const calculateProductivityScore = async (
+    userId: string,
+    completedTasks: number,
+    totalTasks: number,
+    todayFocusMinutes: number,
+    weeklyFocusMinutes: number,
+    overdueCount: number,
+    currentFocusStreak: number
+): Promise<{ score: number; trend: 'up' | 'down' | 'stable'; weeklyComparison: number }> => {
+    // Base score components (0-100 scale)
+
+    // 1. Completion rate (0-35 points)
+    const completionScore = totalTasks > 0 ? (completedTasks / totalTasks) * 35 : 0;
+
+    // 2. Focus score for today (0-25 points) - 1 point per 6 minutes
+    const focusScore = Math.min(25, Math.floor(todayFocusMinutes / 6));
+
+    // 3. Consistency bonus from weekly focus (0-20 points)
+    const weeklyFocusScore = Math.min(20, Math.floor(weeklyFocusMinutes / 30));
+
+    // 4. Streak bonus (0-15 points)
+    const streakBonus = Math.min(15, currentFocusStreak * 1.5);
+
+    // 5. Penalty for overdue tasks (0-20 points deducted)
+    const overduePenalty = Math.min(20, overdueCount * 2.5);
+
+    // Calculate final score
+    const rawScore = completionScore + focusScore + weeklyFocusScore + streakBonus - overduePenalty;
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+
+    // Calculate weekly comparison for trend
+    const lastWeekStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const thisWeekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [lastWeekTasks, lastWeekFocus] = await Promise.all([
+        prisma.task.count({
+            where: {
+                userId,
+                completed: true,
+                completedAt: {
+                    gte: lastWeekStart,
+                    lt: thisWeekStart
+                }
+            }
+        }),
+        prisma.focusSession.aggregate({
+            where: {
+                userId,
+                completed: true,
+                startTime: {
+                    gte: lastWeekStart,
+                    lt: thisWeekStart
+                }
+            },
+            _sum: { durationMinutes: true }
+        })
+    ]);
+
+    // Calculate last week's score for comparison
+    const lastWeekCompletionScore = lastWeekTasks > 0 ? (lastWeekTasks / (lastWeekTasks + 5)) * 35 : 0; // Estimate
+    const lastWeekFocusScore = Math.min(45, Math.floor((lastWeekFocus._sum.durationMinutes || 0) / 15));
+    const lastWeekScore = Math.max(0, Math.min(100, Math.round(lastWeekCompletionScore + lastWeekFocusScore)));
+
+    const weeklyComparison = score - lastWeekScore;
+
+    // Determine trend
+    let trend: 'up' | 'down' | 'stable';
+    if (weeklyComparison > 5) {
+        trend = 'up';
+    } else if (weeklyComparison < -5) {
+        trend = 'down';
+    } else {
+        trend = 'stable';
+    }
+
+    return { score, trend, weeklyComparison };
+};
+
 // Get comprehensive dashboard overview
 export const getDashboardOverview = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
@@ -37,25 +116,36 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
             pendingTasks,
             overdueTasks,
             dueToday,
+            completedToday,
+            newTasksToday,
 
             // Focus statistics
             todayFocusMinutes,
+            todayFocusSessions,
             weeklyFocusMinutes,
+            totalFocusSessions,
+            longestSession,
+            averageSessionLength,
+            completedSessions,
             currentFocusStreak,
+            longestFocusStreak,
             activeSession,
 
             // Board statistics
             totalBoards,
             activeBoards,
             archivedBoards,
+            averageTasksPerBoard,
 
             // Calendar statistics
             upcomingEvents,
             todayEvents,
+            overdueEvents,
 
             // Notes statistics
             totalNotes,
             notesThisWeek,
+            notesThisMonth,
 
             // Streak statistics
             taskStreak,
@@ -82,8 +172,28 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
                     }
                 }
             }),
+            prisma.task.count({
+                where: {
+                    userId,
+                    completed: true,
+                    completedAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            }),
+            prisma.task.count({
+                where: {
+                    userId,
+                    newTask: true,
+                    createdAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            }),
 
-            // Focus
+            // Focus - Enhanced statistics
             prisma.focusSession.aggregate({
                 where: {
                     userId,
@@ -95,6 +205,16 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
                 },
                 _sum: { durationMinutes: true }
             }),
+            prisma.focusSession.count({
+                where: {
+                    userId,
+                    completed: true,
+                    startTime: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            }),
             prisma.focusSession.aggregate({
                 where: {
                     userId,
@@ -103,9 +223,28 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
                 },
                 _sum: { durationMinutes: true }
             }),
+            prisma.focusSession.count({
+                where: { userId, completed: true }
+            }),
+            prisma.focusSession.findFirst({
+                where: { userId, completed: true },
+                orderBy: { durationMinutes: 'desc' },
+                select: { durationMinutes: true }
+            }),
+            prisma.focusSession.aggregate({
+                where: { userId, completed: true },
+                _avg: { durationMinutes: true }
+            }),
+            prisma.focusSession.count({
+                where: { userId, completed: true }
+            }),
             prisma.streak.findFirst({
                 where: { userId, streakType: 'focus_sessions' },
                 select: { currentCount: true }
+            }),
+            prisma.streak.findFirst({
+                where: { userId, streakType: 'focus_sessions' },
+                select: { longestStreak: true }
             }),
             prisma.focusSession.findFirst({
                 where: {
@@ -124,12 +263,20 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
                 }
             }),
 
-            // Boards
+            // Boards - Enhanced statistics
             prisma.board.count({ where: { userId } }),
             prisma.board.count({ where: { userId, isArchived: false } }),
             prisma.board.count({ where: { userId, isArchived: true } }),
+            prisma.task.groupBy({
+                by: ['boardId'],
+                where: { userId },
+                _count: { id: true }
+            }).then(groups => {
+                const totalTasks = groups.reduce((sum, group) => sum + group._count.id, 0);
+                return groups.length > 0 ? Math.round(totalTasks / groups.length) : 0;
+            }),
 
-            // Calendar
+            // Calendar - Enhanced statistics
             prisma.calendarEvent.count({
                 where: {
                     calendar: { userId },
@@ -145,8 +292,15 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
                     }
                 }
             }),
+            prisma.calendarEvent.count({
+                where: {
+                    calendar: { userId },
+                    startTime: { lt: new Date() },
+                    endTime: { gt: new Date() }
+                }
+            }),
 
-            // Notes
+            // Notes - Enhanced statistics
             prisma.note.count({
                 where: { task: { userId } }
             }),
@@ -154,6 +308,12 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
                 where: {
                     task: { userId },
                     createdAt: { gte: startOfWeek }
+                }
+            }),
+            prisma.note.count({
+                where: {
+                    task: { userId },
+                    createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
                 }
             }),
 
@@ -168,18 +328,38 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
             })
         ]);
 
+        // Calculate productivity score
+        const productivity = await calculateProductivityScore(
+            userId,
+            completedTasks,
+            totalTasks,
+            todayFocusMinutes._sum.durationMinutes || 0,
+            weeklyFocusMinutes._sum.durationMinutes || 0,
+            overdueTasks,
+            currentFocusStreak?.currentCount || 0
+        );
+
         const stats: DashboardStats = {
             tasks: {
                 total: totalTasks,
                 completed: completedTasks,
                 pending: pendingTasks,
                 overdue: overdueTasks,
-                dueToday
+                dueToday,
+                newToday: newTasksToday,
+                completedToday,
+                completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
             },
             focus: {
+                totalMinutes: weeklyFocusMinutes._sum.durationMinutes || 0,
+                totalSessions: totalFocusSessions,
                 todayMinutes: todayFocusMinutes._sum.durationMinutes || 0,
-                weeklyMinutes: weeklyFocusMinutes._sum.durationMinutes || 0,
+                todaySessions: todayFocusSessions,
+                averageSessionLength: Math.round(averageSessionLength._avg.durationMinutes || 0),
+                longestSession: longestSession?.durationMinutes || 0,
+                longestStreak: longestFocusStreak?.longestStreak || 0,
                 currentStreak: currentFocusStreak?.currentCount || 0,
+                completionRate: totalFocusSessions > 0 ? Math.round((completedSessions / totalFocusSessions) * 100) : 0,
                 activeSession: activeSession ? {
                     ...activeSession,
                     currentDurationMinutes: Math.round((new Date().getTime() - activeSession.startTime.getTime()) / (1000 * 60))
@@ -188,19 +368,36 @@ export const getDashboardOverview = async (req: AuthenticatedRequest, res: Respo
             boards: {
                 total: totalBoards,
                 active: activeBoards,
-                archived: archivedBoards
+                archived: archivedBoards,
+                averageTasksPerBoard
             },
             calendar: {
+                totalEvents: upcomingEvents + todayEvents,
+                todayEvents,
                 upcomingEvents,
-                todayEvents
+                overdueEvents
             },
             notes: {
                 total: totalNotes,
-                thisWeek: notesThisWeek
+                thisWeek: notesThisWeek,
+                thisMonth: notesThisMonth
             },
-            streaks: {
-                tasks: taskStreak?.currentCount || 0,
-                focus: focusStreak?.currentCount || 0
+            streaks: [
+                {
+                    type: 'daily_tasks',
+                    current: taskStreak?.currentCount || 0,
+                    longest: taskStreak?.currentCount || 0 // You might want to add longestStreak to your streak model
+                },
+                {
+                    type: 'focus_sessions',
+                    current: focusStreak?.currentCount || 0,
+                    longest: longestFocusStreak?.longestStreak || 0
+                }
+            ],
+            productivity: {
+                score: productivity.score,
+                trend: productivity.trend,
+                weeklyComparison: productivity.weeklyComparison
             }
         };
 

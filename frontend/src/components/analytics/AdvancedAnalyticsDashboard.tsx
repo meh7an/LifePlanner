@@ -28,6 +28,7 @@ import { useTaskStore } from "@/lib/stores/taskStore";
 import { useCalendarStore } from "@/lib/stores/calendarStore";
 import { useFocusStore } from "@/lib/stores/focusStore";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { FocusSession, Task } from "@/lib/types";
 
 interface AnalyticsData {
   tasksCompleted: Array<{ date: string; count: number; goal: number }>;
@@ -63,8 +64,48 @@ interface AnalyticsData {
   }>;
 }
 
+export const calculateProductivityScore = (
+  tasks: Task[],
+  sessions: FocusSession[],
+  selectedPeriod: string = "week"
+) => {
+  const days =
+    selectedPeriod === "week" ? 7 : selectedPeriod === "month" ? 30 : 90;
+  const now = new Date();
+
+  const recentTasks = tasks.filter((task) => {
+    const taskDate = new Date(task.completedAt || task.updatedAt);
+    const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return taskDate >= cutoffDate && task.completed;
+  });
+
+  const recentFocus = sessions
+    .filter((session) => {
+      const sessionDate = new Date(session.startTime);
+      const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      return sessionDate >= cutoffDate;
+    })
+    .reduce((sum, session) => sum + session.durationMinutes, 0);
+
+  // Calculate score: tasks completed (10 points each) + focus time (1 point per 5 minutes)
+  const taskScore = recentTasks.length * 10;
+  const focusScore = Math.floor(recentFocus / 5);
+  const totalScore = Math.min(100, taskScore + focusScore);
+
+  return {
+    score: totalScore,
+    trend: totalScore > 75 ? "up" : totalScore > 50 ? "stable" : "down",
+  };
+};
+
 const AdvancedAnalyticsDashboard = () => {
-  const { fetchInsights, insights, overviewLoading } = useDashboardStore();
+  const {
+    fetchInsights,
+    insights,
+    overviewLoading,
+    stats: dashStats,
+    fetchStats: fetchDashStats,
+  } = useDashboardStore();
   const { addNotification } = useUIStore();
   const { boards, fetchBoards } = useBoardStore();
   const { tasks, fetchTasks, fetchTodayTasks } = useTaskStore();
@@ -147,19 +188,8 @@ const AdvancedAnalyticsDashboard = () => {
       };
     });
 
-    // Generate productivity score based on tasks and focus data
-    const productivityScore = Array.from({ length: days }, (_, i) => {
-      const dateIndex = i;
-      const taskCount = tasksCompleted[dateIndex]?.count || 0;
-      const focusTime = focusMinutes[dateIndex]?.minutes || 0;
-      const score = Math.min(100, Math.round(taskCount * 10 + focusTime / 5));
-      return {
-        date: tasksCompleted[dateIndex]?.date || "",
-        score,
-        trend:
-          score > 80 ? "excellent" : score > 65 ? "good" : "needs improvement",
-      };
-    });
+    const score = dashStats?.productivity?.score || 0;
+    const trend = dashStats?.productivity?.trend || "stable";
 
     // Generate boards activity from real boards data
     const boardsActivity = boards.map((board) => {
@@ -284,7 +314,7 @@ const AdvancedAnalyticsDashboard = () => {
 
     // Monthly trends - this is simplified but could be made more sophisticated
     const monthlyTrends = [
-      { month: "Jan", tasks: 120, focus: 1800, productivity: 75 },
+      { month: "Jan", tasks: 120, focus: 1800, productivity: 72 },
       { month: "Feb", tasks: 135, focus: 2100, productivity: 78 },
       { month: "Mar", tasks: 142, focus: 2250, productivity: 82 },
       { month: "Apr", tasks: 128, focus: 1950, productivity: 76 },
@@ -300,26 +330,79 @@ const AdvancedAnalyticsDashboard = () => {
     return {
       tasksCompleted,
       focusMinutes,
-      productivityScore,
+      productivityScore: Array.from({ length: days }, (_, i) => {
+        const date = new Date(
+          now.getTime() - (days - i - 1) * 24 * 60 * 60 * 1000
+        );
+
+        // Filter tasks and sessions for this specific day
+        const dayTasks = tasks.filter((task) => {
+          const taskDate = new Date(task.completedAt || task.updatedAt);
+          return (
+            taskDate.toDateString() === date.toDateString() && task.completed
+          );
+        });
+
+        const daySessions = sessions.filter((session) => {
+          const sessionDate = new Date(session.startTime);
+          return sessionDate.toDateString() === date.toDateString();
+        });
+
+        // Use the same calculation logic as backend
+        const dayProductivity = calculateProductivityScore(
+          dayTasks,
+          daySessions,
+          "day"
+        );
+
+        return {
+          date: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          score: dayProductivity.score,
+          trend:
+            dayProductivity.score > 80
+              ? "excellent"
+              : dayProductivity.score > 65
+              ? "good"
+              : "needs improvement",
+        };
+      }),
       boardsActivity,
       priorityDistribution,
       weeklyComparison: {
         thisWeek: {
           tasks: thisWeekTasks.length,
           focus: thisWeekFocus,
-          score: insights?.summary?.completionRate || 78,
+          score: score,
         },
         lastWeek: {
           tasks: lastWeekTasks.length,
           focus: lastWeekFocus,
-          score: Math.max(0, (insights?.summary?.completionRate || 78) - 6),
+          score: Math.max(
+            0,
+            score - (dashStats?.productivity?.weeklyComparison || 0)
+          ),
         },
       },
       streakData,
       hourlyActivity,
       monthlyTrends,
     };
-  }, [selectedPeriod, tasks, sessions, boards, insights, stats]);
+  }, [
+    selectedPeriod,
+    tasks,
+    dashStats?.productivity?.score,
+    dashStats?.productivity?.trend,
+    dashStats?.productivity?.weeklyComparison,
+    boards,
+    sessions,
+    insights?.activity?.currentStreaks,
+    insights?.summary?.completionRate,
+    stats?.currentStreak,
+    stats?.longestStreak,
+  ]);
 
   const loadAnalyticsData = React.useCallback(async () => {
     try {
@@ -332,11 +415,8 @@ const AdvancedAnalyticsDashboard = () => {
         fetchEvents(),
         fetchSessions(),
         fetchStats(selectedPeriod),
+        fetchDashStats(),
       ]);
-
-      // Generate analytics data from real store data
-      const data = generateAnalyticsFromStores();
-      setAnalyticsData(data);
     } catch (error) {
       console.error("Failed to load analytics:", error);
       addNotification({
@@ -358,10 +438,17 @@ const AdvancedAnalyticsDashboard = () => {
     fetchEvents,
     fetchSessions,
     fetchStats,
-    generateAnalyticsFromStores,
     addNotification,
     user?.id,
+    fetchDashStats,
   ]);
+
+  useEffect(() => {
+    if (tasks.length > 0 && boards.length > 0 && sessions.length > 0) {
+      const data = generateAnalyticsFromStores();
+      setAnalyticsData(data);
+    }
+  }, [tasks, boards, sessions, insights, stats, generateAnalyticsFromStores]);
 
   useEffect(() => {
     loadAnalyticsData();
@@ -583,13 +670,16 @@ const AdvancedAnalyticsDashboard = () => {
                 />
                 <StatCard
                   title="Productivity Score"
-                  value={`${analyticsData.weeklyComparison.thisWeek.score}%`}
-                  change={`+${
-                    analyticsData.weeklyComparison.thisWeek.score -
-                    analyticsData.weeklyComparison.lastWeek.score
-                  }%`}
-                  icon="📈"
-                  color={chartColors.secondary}
+                  value={`${dashStats?.productivity?.score || 0}%`}
+                  change={
+                    dashStats?.productivity?.weeklyComparison
+                      ? `${
+                          dashStats.productivity.weeklyComparison > 0 ? "+" : ""
+                        }${dashStats.productivity.weeklyComparison}`
+                      : "No change"
+                  }
+                  icon="🎯"
+                  color={chartColors.accent}
                 />
                 <StatCard
                   title="Active Streaks"

@@ -532,9 +532,9 @@ class ApiClient {
     // 📊 DASHBOARD ENDPOINTS
     // =============================================================================
 
-    async getDashboardOverview(): Promise<{ stats: DashboardStats }> {
-        const response = await this.client.get<{ stats: DashboardStats }>('/dashboard/overview');
-        return response.data;
+    async getDashboardOverview(): Promise<DashboardStats> {
+        const response = await this.client.get<{ message: string, stats: DashboardStats }>('/dashboard/overview');
+        return response.data.stats;
     }
 
     async getDashboardToday(): Promise<DashboardOverview> {
@@ -546,8 +546,6 @@ class ApiClient {
         const response = await this.client.get<{ message: string, insights: ProductivityInsights }>(
             `/dashboard/insights${period ? `?period=${period}` : ''}`
         );
-        console.log('Productivity Insights:', response.data.insights);
-
         return response.data.insights;
     }
 

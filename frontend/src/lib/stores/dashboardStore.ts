@@ -43,7 +43,7 @@ export const useDashboardStore = create<DashboardState>()(
                 try {
                     const response = await apiClient.getDashboardOverview();
                     set((state) => {
-                        state.stats = response.stats || null;
+                        state.stats = response || null;
                         state.statsLoading = false;
                     });
                 } catch (error) {
