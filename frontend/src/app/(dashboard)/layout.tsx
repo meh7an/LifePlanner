@@ -3,11 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useAuthStore } from "@/lib/stores/authStore";
 import { useUIStore } from "@/lib/stores/uiStore";
 import { UserProfileDropdown } from "@/components/auth/UserProfileDropdown";
 import Link from "next/link";
-import Image from "next/image";
 import GlobalSearchSystem from "@/components/search/GlobalSearchSystem";
 
 export default function DashboardLayout({
@@ -16,7 +14,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
   const {
     sidebarOpen,
     toggleSidebar,
