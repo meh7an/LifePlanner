@@ -89,7 +89,7 @@ export default function DashboardLayout({
           {/* Sidebar */}
           <aside
             className={`transition-all duration-300 ${
-              sidebarOpen ? "w-64" : "w-16"
+              sidebarOpen ? "w-64" : "w-22"
             } bg-white dark:bg-gray-800 border-r border-green-100 dark:border-green-800/30 flex flex-col`}
           >
             {/* Logo */}
@@ -111,7 +111,7 @@ export default function DashboardLayout({
                   </svg>
                 </div>
                 {sidebarOpen && (
-                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent whitespace-nowrap">
                     Life Planner
                   </span>
                 )}
