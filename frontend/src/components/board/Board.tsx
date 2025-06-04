@@ -771,7 +771,7 @@ const BoardList: React.FC<BoardListProps> = ({
 
   return (
     <div
-      className={`${className} bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 min-h-[500px] w-80 flex-shrink-0`}
+      className={`${className} bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 min-h-[500px] w-90 flex-shrink-0`}
     >
       {/* List Header */}
       <div className="flex items-center justify-between mb-4">
@@ -894,7 +894,7 @@ interface BoardViewProps {
 
 const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
   const { selectedBoard, fetchBoard } = useBoardStore();
-  const { tasks, updateTask, deleteTask } = useTaskStore();
+  const { tasks, updateTask, deleteTask, fetchTasks } = useTaskStore();
   const { addNotification } = useUIStore();
 
   // Local state for modals
@@ -918,7 +918,8 @@ const BoardView: React.FC<BoardViewProps> = ({ board, className = "" }) => {
   useEffect(() => {
     // Fetch the full board details (including lists) when component mounts
     fetchBoard(board.id);
-  }, [board.id, fetchBoard]);
+    fetchTasks();
+  }, [board.id, fetchBoard, fetchTasks]);
 
   // Use selectedBoard from store (which has full details including lists)
   const currentBoard = selectedBoard?.id === board.id ? selectedBoard : board;

@@ -294,7 +294,6 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
             status?: TaskStatus;
             listId?: string;
         };
-
         if (!userId) {
             res.status(401).json({
                 error: 'Unauthorized',
@@ -408,7 +407,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
                     }
                 }
             } else if (status !== 'completed') {
-                updateData.status = existingTask.status === 'completed' ? 'todo' : existingTask.status as TaskStatus;
+                updateData.status = status as TaskStatus;
             }
         }
 
