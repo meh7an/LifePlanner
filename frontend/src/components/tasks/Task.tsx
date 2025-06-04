@@ -92,9 +92,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
     defaultValues: {
       taskName: task?.taskName || "",
       description: task?.description || "",
-      dueTime: task?.dueTime
-        ? format(parseISO(task.dueTime), "yyyy-MM-dd'T'HH:mm")
-        : "",
+      dueTime: task?.dueTime ? parseISO(task.dueTime).toISOString() : "",
       priority: task?.priority || "medium",
       boardId: task?.boardId || defaultBoardId || "",
       listId: task?.listId || defaultListId || "",
@@ -118,9 +116,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         reset({
           taskName: task.taskName,
           description: task.description || "",
-          dueTime: task.dueTime
-            ? format(parseISO(task.dueTime), "yyyy-MM-dd'T'HH:mm")
-            : "",
+          dueTime: task.dueTime ? parseISO(task.dueTime).toISOString() : "",
           priority: task.priority,
           boardId: task.boardId,
           listId: task.listId || "",
@@ -145,7 +141,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
         const success = await updateTask(task.id, {
           taskName: data.taskName,
           description: data.description || undefined,
-          dueTime: data.dueTime + ":00.000Z" || undefined,
+          dueTime:
+            (data.dueTime ? parseISO(data.dueTime).toISOString() : undefined) ||
+            undefined,
           priority: data.priority,
           listId: data.listId || undefined,
         });
@@ -153,11 +151,15 @@ const TaskModal: React.FC<TaskModalProps> = ({
           onClose();
         }
       } else {
+        console.log(data.dueTime && parseISO(data.dueTime).toISOString());
+
         // Create new task
         const success = await createTask({
           taskName: data.taskName,
           description: data.description || undefined,
-          dueTime: data.dueTime + ":00.000Z" || undefined,
+          dueTime:
+            (data.dueTime ? parseISO(data.dueTime).toISOString() : undefined) ||
+            undefined,
           priority: data.priority,
           boardId: data.boardId,
           listId: data.listId || undefined,

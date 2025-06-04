@@ -786,13 +786,16 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
     fetchTodaySummary,
   } = useFocusStore();
 
+  const { fetchTasks } = useTaskStore();
+
   const { addNotification } = useUIStore();
 
   useEffect(() => {
     fetchActiveSession();
     fetchStats();
     fetchTodaySummary();
-  }, [fetchActiveSession, fetchStats, fetchTodaySummary]);
+    fetchTasks();
+  }, [fetchActiveSession, fetchStats, fetchTodaySummary, fetchTasks]);
 
   const handleStartSession = async (data: StartFocusRequest) => {
     const success = await startSession(data);
