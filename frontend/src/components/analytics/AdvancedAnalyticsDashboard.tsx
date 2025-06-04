@@ -442,7 +442,11 @@ const AdvancedAnalyticsDashboard = () => {
   ]);
 
   useEffect(() => {
-    if (tasks.length > 0 && boards.length > 0 && sessions.length > 0) {
+    if (
+      Array.isArray(tasks) &&
+      Array.isArray(boards) &&
+      Array.isArray(sessions)
+    ) {
       const data = generateAnalyticsFromStores();
       setAnalyticsData(data);
     }
@@ -1184,82 +1188,6 @@ const AdvancedAnalyticsDashboard = () => {
                           </span>
                         </div>
                       ))}
-                </div>
-              </div>
-
-              {/* Achievement Badges */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-100 dark:border-green-800/30">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-                  <span className="text-2xl mr-3">🏆</span>
-                  Recent Achievements
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    {
-                      icon: "🔥",
-                      title: "Week Warrior",
-                      desc: `${
-                        analyticsData.streakData[0]?.current || 0
-                      }-day streak`,
-                      unlocked:
-                        (analyticsData.streakData[0]?.current || 0) >= 7,
-                    },
-                    {
-                      icon: "⚡",
-                      title: "Focus Master",
-                      desc: `${stats?.totalMinutes || 0}+ minutes`,
-                      unlocked: (stats?.totalMinutes || 0) >= 600, // 10+ hours
-                    },
-                    {
-                      icon: "✅",
-                      title: "Task Crusher",
-                      desc: `${
-                        tasks.filter((t) => t.completed).length
-                      } completed`,
-                      unlocked: tasks.filter((t) => t.completed).length >= 50,
-                    },
-                    {
-                      icon: "🎯",
-                      title: "Goal Getter",
-                      desc: "Monthly target",
-                      unlocked: (insights?.summary?.completionRate || 0) >= 80,
-                    },
-                  ].map((badge, index) => (
-                    <div
-                      key={index}
-                      className={`text-center p-4 rounded-lg border-2 transition-all ${
-                        badge.unlocked
-                          ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
-                          : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800 opacity-60"
-                      }`}
-                    >
-                      <div
-                        className={`text-3xl mb-2 ${
-                          badge.unlocked ? "" : "grayscale"
-                        }`}
-                      >
-                        {badge.icon}
-                      </div>
-                      <h4
-                        className={`font-medium text-sm ${
-                          badge.unlocked
-                            ? "text-green-800 dark:text-green-200"
-                            : "text-gray-600 dark:text-gray-400"
-                        }`}
-                      >
-                        {badge.title}
-                      </h4>
-                      <p
-                        className={`text-xs mt-1 ${
-                          badge.unlocked
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-gray-500 dark:text-gray-500"
-                        }`}
-                      >
-                        {badge.desc}
-                      </p>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

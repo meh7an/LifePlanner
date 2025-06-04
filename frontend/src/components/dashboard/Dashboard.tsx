@@ -1,10 +1,10 @@
 // =============================================================================
-// 🏠 COMPLETE DASHBOARD COMPONENT WITH WORKING MODALS
+// 🏠 COMPLETE DASHBOARD COMPONENT WITH WORKING MODALS - UPDATED LAYOUT
 // =============================================================================
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   CheckSquare,
@@ -31,6 +31,7 @@ import type { Task, Board, CalendarEvent } from "@/lib/types";
 import TaskComponents from "../tasks/Task";
 import { BoardModal } from "../board/Board";
 import { EventModal } from "../calendar/Calendar";
+import { useRouter } from "next/navigation";
 
 const { TaskModal } = TaskComponents;
 
@@ -131,6 +132,116 @@ const StatsCards: React.FC = () => {
           </div>
         );
       })}
+    </div>
+  );
+};
+
+// =============================================================================
+// 🎯 UPDATED QUICK ACTIONS COMPONENT - Now responsive 4-column to 2-column
+// =============================================================================
+
+interface QuickActionsProps {
+  onOpenTaskModal: () => void;
+  onOpenEventModal: () => void;
+  onOpenBoardModal: () => void;
+}
+
+const QuickActions: React.FC<QuickActionsProps> = ({
+  onOpenTaskModal,
+  onOpenEventModal,
+  onOpenBoardModal,
+}) => {
+  const { startSession, startLoading } = useFocusStore();
+  const { fetchStats } = useDashboardStore();
+
+  const handleStartFocusSession = async () => {
+    const success = await startSession({ durationMinutes: 25 });
+    if (success) {
+      // FIXED: Refresh dashboard stats when focus session starts
+      await fetchStats();
+    }
+  };
+
+  const actions = [
+    {
+      title: "New Task",
+      description: "Add a task to your list",
+      icon: Plus,
+      color: "green",
+      action: onOpenTaskModal,
+    },
+    {
+      title: startLoading ? "Starting..." : "Start Focus",
+      description: "Begin a focus session",
+      icon: Zap,
+      color: "orange",
+      action: handleStartFocusSession,
+      disabled: startLoading,
+    },
+    {
+      title: "Add Event",
+      description: "Schedule a calendar event",
+      icon: Calendar,
+      color: "blue",
+      action: onOpenEventModal,
+    },
+    {
+      title: "New Board",
+      description: "Create a project board",
+      icon: BarChart3,
+      color: "purple",
+      action: onOpenBoardModal,
+    },
+  ];
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6 mb-6">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        Quick Actions
+      </h2>
+
+      {/* Updated grid: 4 columns on large screens, 2 columns on smaller screens */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {actions.map((action, index) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={index}
+              onClick={action.action}
+              disabled={action.disabled}
+              className={`p-4 rounded-lg border-2 border-dashed transition-all hover:border-solid hover:shadow-md ${
+                action.disabled
+                  ? "opacity-50 cursor-not-allowed"
+                  : action.color === "green"
+                  ? "border-green-300 dark:border-green-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  : action.color === "orange"
+                  ? "border-orange-300 dark:border-orange-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                  : action.color === "blue"
+                  ? "border-blue-300 dark:border-blue-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  : "border-purple-300 dark:border-purple-700 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+              }`}
+            >
+              <Icon
+                className={`w-6 h-6 mx-auto mb-2 ${
+                  action.color === "green"
+                    ? "text-green-600 dark:text-green-400"
+                    : action.color === "orange"
+                    ? "text-orange-600 dark:text-orange-400"
+                    : action.color === "blue"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-purple-600 dark:text-purple-400"
+                }`}
+              />
+              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                {action.title}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {action.description}
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -436,128 +547,6 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
 };
 
 // =============================================================================
-// ⚡ ACTIVE FOCUS SESSION COMPONENT
-// =============================================================================
-
-const ActiveFocusSession: React.FC = () => {
-  const {
-    activeSession,
-    currentDuration,
-    isRunning,
-    endSession,
-    pauseSession,
-    resumeSession,
-  } = useFocusStore();
-  const [displayTime, setDisplayTime] = useState("00:00");
-
-  useEffect(() => {
-    const minutes = Math.floor(currentDuration / 60);
-    const seconds = currentDuration % 60;
-    setDisplayTime(
-      `${minutes.toString().padStart(2, "0")}:${seconds
-        .toString()
-        .padStart(2, "0")}`
-    );
-  }, [currentDuration]);
-
-  if (!activeSession) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
-        <div className="text-center py-8">
-          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-8 h-8 text-orange-500" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No active focus session
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Start a focus session to boost your productivity.
-          </p>
-          <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-colors">
-            <Zap className="w-4 h-4 mr-2" />
-            Start Focus Session
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
-      <div className="text-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center justify-center">
-          <Zap className="w-5 h-5 text-orange-500 mr-2" />
-          Focus Session Active
-        </h2>
-
-        {/* Timer Display */}
-        <div className="mb-6">
-          <div className="text-4xl font-bold text-orange-500 mb-2">
-            {displayTime}
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {activeSession.task?.taskName || "General Focus Session"}
-          </p>
-        </div>
-
-        {/* Progress Ring */}
-        <div className="relative w-32 h-32 mx-auto mb-6">
-          <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="transparent"
-              className="text-gray-200 dark:text-gray-700"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="transparent"
-              strokeDasharray={`${2 * Math.PI * 40}`}
-              strokeDashoffset={`${
-                2 * Math.PI * 40 * (1 - (currentDuration % 1500) / 1500)
-              }`}
-              className="text-orange-500 transition-all duration-1000"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Zap className="w-8 h-8 text-orange-500" />
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex justify-center space-x-3">
-          <button
-            onClick={isRunning ? pauseSession : resumeSession}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-          >
-            {isRunning ? "Pause" : "Resume"}
-          </button>
-          <button
-            onClick={() => endSession(true)}
-            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-          >
-            Complete
-          </button>
-          <button
-            onClick={() => endSession(false)}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-          >
-            End
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
 // 📈 QUICK INSIGHTS COMPONENT
 // =============================================================================
 
@@ -666,116 +655,239 @@ const QuickInsights: React.FC = () => {
 };
 
 // =============================================================================
-// 🎯 QUICK ACTIONS COMPONENT
+// ⚡ ACTIVE FOCUS SESSION COMPONENT FOR DASHBOARD
 // =============================================================================
 
-interface QuickActionsProps {
-  onOpenTaskModal: () => void;
-  onOpenEventModal: () => void;
-  onOpenBoardModal: () => void;
-}
+const ActiveFocusSession: React.FC = () => {
+  const { activeSession, endSession, pauseSession, resumeSession } =
+    useFocusStore();
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
-const QuickActions: React.FC<QuickActionsProps> = ({
-  onOpenTaskModal,
-  onOpenEventModal,
-  onOpenBoardModal,
-}) => {
-  const { startSession, startLoading } = useFocusStore();
-  const { fetchStats } = useDashboardStore();
+  // FIXED: Use the actual session duration like in focus page
+  const sessionDurationMinutes = activeSession?.durationMinutes || 25;
+  const totalDurationSeconds = sessionDurationMinutes * 60;
 
-  const handleStartFocusSession = async () => {
-    const success = await startSession({ durationMinutes: 25 });
-    if (success) {
-      // FIXED: Refresh dashboard stats when focus session starts
-      await fetchStats();
+  useEffect(() => {
+    if (!activeSession) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      return;
     }
+
+    const startTime = parseISO(activeSession.startTime);
+
+    // FIXED: Calculate elapsed time in SECONDS, not minutes
+    const now = new Date();
+    const elapsedSeconds = Math.floor(
+      (now.getTime() - startTime.getTime()) / 1000
+    );
+    const remaining = Math.max(0, totalDurationSeconds - elapsedSeconds);
+
+    setTimeRemaining(remaining);
+
+    // FIXED: Start the timer interval immediately if not paused
+    if (!isPaused && remaining > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            // Timer finished
+            endSession(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000); // FIXED: Update every 1000ms (1 second)
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [activeSession, isPaused, totalDurationSeconds, endSession]);
+
+  const handlePause = () => {
+    setIsPaused(true);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    pauseSession();
   };
 
-  const actions = [
-    {
-      title: "New Task",
-      description: "Add a task to your list",
-      icon: Plus,
-      color: "green",
-      action: onOpenTaskModal,
-    },
-    {
-      title: startLoading ? "Starting..." : "Start Focus",
-      description: "Begin a focus session",
-      icon: Zap,
-      color: "orange",
-      action: handleStartFocusSession,
-      disabled: startLoading,
-    },
-    {
-      title: "Add Event",
-      description: "Schedule a calendar event",
-      icon: Calendar,
-      color: "blue",
-      action: onOpenEventModal,
-    },
-    {
-      title: "New Board",
-      description: "Create a project board",
-      icon: BarChart3,
-      color: "purple",
-      action: onOpenBoardModal,
-    },
-  ];
+  const handleResume = () => {
+    setIsPaused(false);
+    // Timer will restart in the next useEffect cycle
+    resumeSession();
+  };
+
+  const handleEndSession = (completed: boolean) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    endSession(completed);
+  };
+
+  const handleViewFullSession = () => {
+    router.push("/dashboard/focus");
+  };
+
+  // Format time display
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Calculate progress percentage
+  const progressPercentage =
+    totalDurationSeconds > 0
+      ? ((totalDurationSeconds - timeRemaining) / totalDurationSeconds) * 100
+      : 0;
+
+  if (!activeSession) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Zap className="w-8 h-8 text-orange-500" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No active focus session
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            Start a focus session to boost your productivity.
+          </p>
+          <button
+            onClick={handleViewFullSession}
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-colors"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Start Focus Session
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-        Quick Actions
-      </h2>
+      <div className="text-center">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center justify-center">
+          <Zap className="w-5 h-5 text-orange-500 mr-2" />
+          Focus Session Active
+        </h2>
 
-      <div className="grid grid-cols-2 gap-3">
-        {actions.map((action, index) => {
-          const Icon = action.icon;
-          return (
-            <button
-              key={index}
-              onClick={action.action}
-              disabled={action.disabled}
-              className={`p-4 rounded-lg border-2 border-dashed transition-all hover:border-solid hover:shadow-md ${
-                action.disabled
-                  ? "opacity-50 cursor-not-allowed"
-                  : action.color === "green"
-                  ? "border-green-300 dark:border-green-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
-                  : action.color === "orange"
-                  ? "border-orange-300 dark:border-orange-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                  : action.color === "blue"
-                  ? "border-blue-300 dark:border-blue-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                  : "border-purple-300 dark:border-purple-700 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+        {/* Timer Display - FIXED with real countdown */}
+        <div className="mb-6">
+          <div className="text-4xl font-bold text-orange-500 mb-2">
+            {formatTime(timeRemaining)}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {activeSession.task?.taskName || "General Focus Session"}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {sessionDurationMinutes} minute session •{" "}
+            {Math.round(progressPercentage)}% complete
+          </p>
+        </div>
+
+        {/* Progress Ring - FIXED with real progress */}
+        <div className="relative w-32 h-32 mx-auto mb-6">
+          <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="transparent"
+              className="text-gray-200 dark:text-gray-700"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="transparent"
+              strokeDasharray={`${2 * Math.PI * 40}`}
+              strokeDashoffset={`${
+                2 * Math.PI * 40 * (1 - progressPercentage / 100)
               }`}
-            >
-              <Icon
-                className={`w-6 h-6 mx-auto mb-2 ${
-                  action.color === "green"
-                    ? "text-green-600 dark:text-green-400"
-                    : action.color === "orange"
-                    ? "text-orange-600 dark:text-orange-400"
-                    : action.color === "blue"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-purple-600 dark:text-purple-400"
-                }`}
-              />
-              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {action.title}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {action.description}
-              </div>
-            </button>
-          );
-        })}
+              className={`transition-all duration-1000 ${
+                isPaused ? "text-yellow-500" : "text-orange-500"
+              }`}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Zap
+              className={`w-8 h-8 ${
+                isPaused ? "text-yellow-500" : "text-orange-500"
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Status indicator */}
+        <div className="mb-4">
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              isPaused
+                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+                : "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+            }`}
+          >
+            {isPaused ? "⏸️ Paused" : "🎯 Focusing"}
+          </span>
+        </div>
+
+        {/* Controls */}
+        <div className="flex justify-center space-x-2 mb-4">
+          <button
+            onClick={isPaused ? handleResume : handlePause}
+            className={`px-3 py-2 text-white rounded-lg transition-colors text-sm ${
+              isPaused
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-yellow-500 hover:bg-yellow-600"
+            }`}
+          >
+            {isPaused ? "Resume" : "Pause"}
+          </button>
+          <button
+            onClick={() => handleEndSession(true)}
+            className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+          >
+            Complete
+          </button>
+          <button
+            onClick={() => handleEndSession(false)}
+            className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
+          >
+            End
+          </button>
+        </div>
+
+        {/* View Full Session Button */}
+        <button
+          onClick={handleViewFullSession}
+          className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
+        >
+          View Full Session →
+        </button>
       </div>
     </div>
   );
 };
 
 // =============================================================================
-// 🏠 MAIN DASHBOARD COMPONENT
+// 🏠 MAIN DASHBOARD COMPONENT - UPDATED LAYOUT WITH QUICK ACTIONS FIRST
 // =============================================================================
 
 const Dashboard: React.FC = () => {
@@ -903,10 +1015,17 @@ const Dashboard: React.FC = () => {
         {/* Stats Cards */}
         <StatsCards />
 
-        {/* Main Grid */}
+        {/* NEW LAYOUT: Quick Actions as full-width row */}
+
+        {/* Main Grid - Now without Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Left Column - Tasks and Events */}
           <div className="lg:col-span-2 space-y-6">
+            <QuickActions
+              onOpenTaskModal={handleOpenTaskModal}
+              onOpenEventModal={handleOpenEventModal}
+              onOpenBoardModal={handleOpenBoardModal}
+            />
             <TodaysTasks onOpenTaskModal={handleOpenTaskModal} />
             <UpcomingEvents onOpenEventModal={handleOpenEventModal} />
           </div>
@@ -915,11 +1034,6 @@ const Dashboard: React.FC = () => {
           <div className="space-y-6">
             <ActiveFocusSession />
             <QuickInsights />
-            <QuickActions
-              onOpenTaskModal={handleOpenTaskModal}
-              onOpenEventModal={handleOpenEventModal}
-              onOpenBoardModal={handleOpenBoardModal}
-            />
           </div>
         </div>
 
