@@ -565,6 +565,154 @@ interface WeekViewProps {
   onCreateEvent: (date: Date) => void;
 }
 
+// Helper function to calculate event positioning and overlaps
+const calculateEventLayout = (events: CalendarEvent[], weekDays: Date[]) => {
+  const eventLayouts: Array<{
+    event: CalendarEvent;
+    dayIndex: number;
+    startHour: number;
+    duration: number; // in hours
+    spans: number; // number of days it spans
+    column: number; // for overlapping events
+    width: number; // width percentage
+    left: number; // left offset percentage
+  }> = [];
+
+  // Group events by day
+  const eventsByDay = weekDays.map((day, dayIndex) => {
+    const dayEvents = events
+      .filter((event) => {
+        const eventStart = parseISO(event.startTime);
+        const eventEnd = parseISO(event.endTime);
+
+        // Check if event intersects with this day
+        const dayStart = new Date(day);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(day);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        return eventStart <= dayEnd && eventEnd >= dayStart;
+      })
+      .map((event) => {
+        const eventStart = parseISO(event.startTime);
+        const eventEnd = parseISO(event.endTime);
+
+        // Calculate how this event appears on this specific day
+        const dayStart = new Date(day);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(day);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        // Clamp the event times to this day's boundaries
+        const displayStart = eventStart < dayStart ? dayStart : eventStart;
+        const displayEnd = eventEnd > dayEnd ? dayEnd : eventEnd;
+
+        const startHour =
+          displayStart.getHours() + displayStart.getMinutes() / 60;
+        const endHour = displayEnd.getHours() + displayEnd.getMinutes() / 60;
+        const duration = endHour - startHour;
+
+        // Calculate total span in days
+        const totalStart = eventStart;
+        const totalEnd = eventEnd;
+        const daysDiff = Math.ceil(
+          (totalEnd.getTime() - totalStart.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const spans = Math.max(1, daysDiff);
+
+        return {
+          event,
+          dayIndex,
+          startHour,
+          duration: Math.max(0.5, duration), // Minimum 30 minutes display
+          spans,
+          originalStart: eventStart,
+          originalEnd: eventEnd,
+        };
+      })
+      .sort((a, b) => {
+        // Sort by start time, then by duration (longer events first)
+        if (a.startHour !== b.startHour) {
+          return a.startHour - b.startHour;
+        }
+        return b.duration - a.duration;
+      });
+
+    return { dayIndex, events: dayEvents };
+  });
+
+  // Calculate overlaps and positioning for each day
+  eventsByDay.forEach(({ dayIndex, events: dayEvents }) => {
+    const overlappingGroups: Array<Array<(typeof dayEvents)[0]>> = [];
+
+    dayEvents.forEach((eventData) => {
+      // Find which group this event belongs to (based on time overlap)
+      const groupIndex = overlappingGroups.findIndex((group) =>
+        group.some((groupEvent) => {
+          const eventEnd = eventData.startHour + eventData.duration;
+          const groupEventEnd = groupEvent.startHour + groupEvent.duration;
+
+          // Check if they overlap in time
+          return !(
+            eventEnd <= groupEvent.startHour ||
+            eventData.startHour >= groupEventEnd
+          );
+        })
+      );
+
+      if (groupIndex === -1) {
+        // Create new group
+        overlappingGroups.push([eventData]);
+      } else {
+        // Add to existing group
+        overlappingGroups[groupIndex].push(eventData);
+      }
+    });
+
+    // Process each overlapping group
+    overlappingGroups.forEach((group) => {
+      const groupSize = group.length;
+
+      group.forEach((eventData, index) => {
+        const column = index;
+        let width = 100 / groupSize;
+        let left = (100 / groupSize) * index;
+
+        // For nested events (smaller inside bigger), adjust positioning
+        if (groupSize > 1) {
+          // Sort by duration to identify nesting relationships
+          const sortedGroup = [...group].sort(
+            (a, b) => b.duration - a.duration
+          );
+          const currentEventIndex = sortedGroup.findIndex(
+            (e) => e.event.id === eventData.event.id
+          );
+
+          if (currentEventIndex > 0) {
+            // This is a nested event
+            const padding = 8; // 8% padding
+            width = width - padding;
+            left = left + padding / 2;
+          }
+        }
+
+        eventLayouts.push({
+          event: eventData.event,
+          dayIndex,
+          startHour: eventData.startHour,
+          duration: eventData.duration,
+          spans: eventData.spans,
+          column,
+          width,
+          left,
+        });
+      });
+    });
+  });
+
+  return eventLayouts;
+};
+
 const WeekView: React.FC<WeekViewProps> = ({
   selectedDate,
   events,
@@ -583,6 +731,11 @@ const WeekView: React.FC<WeekViewProps> = ({
     "Friday",
     "Saturday",
   ];
+
+  const eventLayouts = useMemo(
+    () => calculateEventLayout(events, weekDays),
+    [events, weekDays]
+  );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 overflow-hidden">
@@ -620,14 +773,16 @@ const WeekView: React.FC<WeekViewProps> = ({
         })}
       </div>
 
-      {/* Time Grid */}
-      <div className="max-h-96 overflow-y-auto">
+      {/* Time Grid with Enhanced Event Positioning */}
+      <div className="max-h-96 overflow-y-auto relative">
         {hours.map((hour) => (
           <div
             key={hour}
-            className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700"
+            className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700 relative"
+            style={{ height: "60px" }} // Fixed height for precise positioning
           >
-            <div className="p-2 text-right text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 min-w-0">
+            {/* Time Label */}
+            <div className="p-2 text-right text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 min-w-0 flex items-start">
               {hour === 0
                 ? "12 AM"
                 : hour < 12
@@ -636,46 +791,114 @@ const WeekView: React.FC<WeekViewProps> = ({
                 ? "12 PM"
                 : `${hour - 12} PM`}
             </div>
-            {weekDays.map((day, dayIndex) => {
-              const hourEvents = events.filter((event) => {
-                const eventDate = parseISO(event.startTime);
-                const eventHour = eventDate.getHours();
-                return isSameDay(eventDate, day) && eventHour === hour;
-              });
 
-              return (
-                <div
-                  key={dayIndex}
-                  className="h-12 border-r border-gray-100 dark:border-gray-700 relative hover:bg-green-50 dark:hover:bg-green-900/10 cursor-pointer"
-                  onClick={() => {
-                    const clickedTime = setHours(setMinutes(day, 0), hour);
-                    onCreateEvent(clickedTime);
-                  }}
-                >
-                  {hourEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
-                      className={`
-                        absolute inset-1 rounded text-white text-xs p-1 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity
-                        ${getEventColor(event.eventType)}
-                      `}
-                    >
-                      <div className="font-medium truncate">
-                        {event.task?.taskName || event.eventType}
-                      </div>
-                      <div className="text-xs opacity-90">
-                        {format(parseISO(event.startTime), "HH:mm")} -{" "}
-                        {format(parseISO(event.endTime), "HH:mm")}
-                      </div>
-                    </div>
-                  ))}
+            {/* Day Columns */}
+            {weekDays.map((day, dayIndex) => (
+              <div
+                key={dayIndex}
+                className="border-r border-gray-100 dark:border-gray-700 relative hover:bg-green-50 dark:hover:bg-green-900/10 cursor-pointer"
+                onClick={() => {
+                  const clickedTime = setHours(setMinutes(day, 0), hour);
+                  onCreateEvent(clickedTime);
+                }}
+                style={{ height: "60px" }}
+              >
+                {/* Click area indicator */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-gray-400 dark:text-gray-600 pointer-events-none">
+                    +
+                  </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
+
+            {/* Render events that start in this hour */}
+            {eventLayouts
+              .filter((layout) => Math.floor(layout.startHour) === hour)
+              .map((layout) => {
+                const startMinute = (layout.startHour % 1) * 60;
+                const heightInPixels = layout.duration * 60; // 60px per hour
+                const topOffset = startMinute; // pixels from top of hour
+
+                return (
+                  <div
+                    key={layout.event.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEventClick(layout.event);
+                    }}
+                    className={`
+                      absolute rounded-md text-white text-xs cursor-pointer hover:opacity-80 transition-all z-10 overflow-hidden
+                      ${getEventColor(layout.event.eventType)}
+                    `}
+                    style={{
+                      left: `${
+                        12.5 +
+                        layout.dayIndex * 12.5 +
+                        (layout.left * 12.5) / 100
+                      }%`,
+                      width: `${(layout.width * 12.5) / 100}%`,
+                      top: `${topOffset}px`,
+                      height: `${Math.max(30, heightInPixels)}px`, // Minimum 30px height
+                      zIndex: layout.spans > 1 ? 20 : 10, // Multi-day events on top
+                    }}
+                  >
+                    <div className="p-2 h-full flex flex-col">
+                      {/* Event Title */}
+                      <div className="font-medium truncate text-xs leading-tight">
+                        {layout.event.task?.taskName || layout.event.eventType}
+                      </div>
+
+                      {/* Time Display */}
+                      {layout.duration >= 1 && ( // Only show time if event is at least 1 hour
+                        <div className="text-xs opacity-90 mt-1 truncate">
+                          {format(parseISO(layout.event.startTime), "HH:mm")} -{" "}
+                          {format(parseISO(layout.event.endTime), "HH:mm")}
+                        </div>
+                      )}
+
+                      {/* Multi-day indicator */}
+                      {layout.spans > 1 && (
+                        <div className="text-xs opacity-75 mt-1 flex items-center">
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                            />
+                          </svg>
+                          {layout.spans}d
+                        </div>
+                      )}
+
+                      {/* Alarm indicator */}
+                      {layout.event.alarm && layout.duration >= 0.75 && (
+                        <div className="text-xs opacity-75 mt-1 flex items-center">
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 17h5l-5 5v-5zM8.5 14.5A2.5 2.5 0 018 12V7a4 4 0 118 0v5a2.5 2.5 0 01-.5 2.5L12 17l-3.5-2.5z"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         ))}
       </div>
@@ -687,12 +910,139 @@ const WeekView: React.FC<WeekViewProps> = ({
 // 📅 DAY VIEW COMPONENT
 // =============================================================================
 
+// =============================================================================
+// 📅 ENHANCED DAY VIEW COMPONENT WITH MULTI-HOUR EVENTS
+// =============================================================================
+
 interface DayViewProps {
   selectedDate: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onCreateEvent: (date: Date) => void;
 }
+
+// Helper function to calculate event positioning and overlaps for day view
+const calculateDayEventLayout = (
+  events: CalendarEvent[],
+  selectedDate: Date
+) => {
+  const dayEvents = events
+    .filter((event) => {
+      const eventStart = parseISO(event.startTime);
+      const eventEnd = parseISO(event.endTime);
+
+      // Check if event intersects with selected day
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      return eventStart <= dayEnd && eventEnd >= dayStart;
+    })
+    .map((event) => {
+      const eventStart = parseISO(event.startTime);
+      const eventEnd = parseISO(event.endTime);
+
+      // Clamp the event times to this day's boundaries
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const displayStart = eventStart < dayStart ? dayStart : eventStart;
+      const displayEnd = eventEnd > dayEnd ? dayEnd : eventEnd;
+
+      const startHour =
+        displayStart.getHours() + displayStart.getMinutes() / 60;
+      const endHour = displayEnd.getHours() + displayEnd.getMinutes() / 60;
+      const duration = endHour - startHour;
+
+      // Check if this is a multi-day event
+      const isMultiDay = eventStart < dayStart || eventEnd > dayEnd;
+      const totalDays = Math.ceil(
+        (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      return {
+        event,
+        startHour,
+        duration: Math.max(0.5, duration), // Minimum 30 minutes display
+        originalStart: eventStart,
+        originalEnd: eventEnd,
+        isMultiDay,
+        totalDays: Math.max(1, totalDays),
+      };
+    })
+    .sort((a, b) => {
+      // Sort by start time, then by duration (longer events first)
+      if (a.startHour !== b.startHour) {
+        return a.startHour - b.startHour;
+      }
+      return b.duration - a.duration;
+    });
+
+  // Group overlapping events
+  const overlappingGroups: Array<Array<(typeof dayEvents)[0]>> = [];
+
+  dayEvents.forEach((eventData) => {
+    // Find which group this event belongs to (based on time overlap)
+    const groupIndex = overlappingGroups.findIndex((group) =>
+      group.some((groupEvent) => {
+        const eventEnd = eventData.startHour + eventData.duration;
+        const groupEventEnd = groupEvent.startHour + groupEvent.duration;
+
+        // Check if they overlap in time
+        return !(
+          eventEnd <= groupEvent.startHour ||
+          eventData.startHour >= groupEventEnd
+        );
+      })
+    );
+
+    if (groupIndex === -1) {
+      // Create new group
+      overlappingGroups.push([eventData]);
+    } else {
+      // Add to existing group
+      overlappingGroups[groupIndex].push(eventData);
+    }
+  });
+
+  // Calculate positioning for each event
+  const eventLayouts: Array<{
+    event: CalendarEvent;
+    startHour: number;
+    duration: number;
+    width: number;
+    left: number;
+    isMultiDay: boolean;
+    totalDays: number;
+  }> = [];
+
+  overlappingGroups.forEach((group) => {
+    const groupSize = group.length;
+    const gapSize = groupSize > 1 ? 2 : 0; // 2% gap between columns when overlapping
+
+    group.forEach((eventData, index) => {
+      // Calculate width and position with gaps
+      const availableWidth = 100 - gapSize * (groupSize - 1);
+      const width = availableWidth / groupSize;
+      const left = (width + gapSize) * index;
+
+      eventLayouts.push({
+        event: eventData.event,
+        startHour: eventData.startHour,
+        duration: eventData.duration,
+        width,
+        left,
+        isMultiDay: eventData.isMultiDay,
+        totalDays: eventData.totalDays,
+      });
+    });
+  });
+
+  return eventLayouts;
+};
 
 const DayView: React.FC<DayViewProps> = ({
   selectedDate,
@@ -701,7 +1051,10 @@ const DayView: React.FC<DayViewProps> = ({
   onCreateEvent,
 }) => {
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const dayEvents = getEventsByDate(events, selectedDate);
+  const eventLayouts = useMemo(
+    () => calculateDayEventLayout(events, selectedDate),
+    [events, selectedDate]
+  );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 overflow-hidden">
@@ -711,35 +1064,23 @@ const DayView: React.FC<DayViewProps> = ({
           {format(selectedDate, "EEEE, MMMM d, yyyy")}
         </h2>
         <p className="text-green-600 dark:text-green-400 mt-1">
-          {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}{" "}
+          {eventLayouts.length} {eventLayouts.length === 1 ? "event" : "events"}{" "}
           scheduled
         </p>
       </div>
 
-      {/* Time Slots */}
-      <div className="max-h-96 overflow-y-auto">
+      {/* Time Slots with Enhanced Event Positioning */}
+      <div className="max-h-96 overflow-y-auto relative">
         {hours.map((hour) => {
-          const hourEvents = dayEvents.filter((event) => {
-            const eventHour = parseISO(event.startTime).getHours();
-            return eventHour === hour;
-          });
-
           return (
             <div
               key={hour}
-              className="flex border-b border-gray-100 dark:border-gray-700"
+              className="flex border-b border-gray-100 dark:border-gray-700 relative"
+              style={{ height: "80px" }} // Increased height for better visibility
             >
-              <div className="w-20 p-3 text-right text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
-                {hour === 0
-                  ? "12 AM"
-                  : hour < 12
-                  ? `${hour} AM`
-                  : hour === 12
-                  ? "12 PM"
-                  : `${hour - 12} PM`}
-              </div>
+              {/* Time Label */}
               <div
-                className="flex-1 min-h-[60px] p-2 hover:bg-green-50 dark:hover:bg-green-900/10 cursor-pointer relative"
+                className="w-20 p-3 text-right text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 flex items-start hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors"
                 onClick={() => {
                   const clickedTime = setHours(
                     setMinutes(selectedDate, 0),
@@ -748,50 +1089,136 @@ const DayView: React.FC<DayViewProps> = ({
                   onCreateEvent(clickedTime);
                 }}
               >
-                {hourEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEventClick(event);
-                    }}
-                    className={`
-                      mb-2 p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity
-                      ${getEventColor(event.eventType)} text-white
-                    `}
-                  >
-                    <div className="font-medium">
-                      {event.task?.taskName || event.eventType}
+                {hour === 0
+                  ? "12 AM"
+                  : hour < 12
+                  ? `${hour} AM`
+                  : hour === 12
+                  ? "12 PM"
+                  : `${hour - 12} PM`}
+              </div>
+
+              {/* Main Content Area */}
+              <div
+                className="flex-1 relative hover:bg-green-50 dark:hover:bg-green-900/10 cursor-pointer"
+                onClick={() => {
+                  const clickedTime = setHours(
+                    setMinutes(selectedDate, 0),
+                    hour
+                  );
+                  onCreateEvent(clickedTime);
+                }}
+                style={{ height: "80px" }}
+              >
+                {/* Empty slot indicator */}
+                {eventLayouts.filter(
+                  (layout) => Math.floor(layout.startHour) === hour
+                ).length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <div className="text-gray-400 dark:text-gray-600 text-sm italic pointer-events-none">
+                      Click to add event
                     </div>
-                    <div className="text-sm opacity-90 mt-1">
-                      {format(parseISO(event.startTime), "h:mm a")} -{" "}
-                      {format(parseISO(event.endTime), "h:mm a")}
-                    </div>
-                    {event.alarm && (
-                      <div className="text-xs opacity-75 mt-1 flex items-center">
-                        <svg
-                          className="w-3 h-3 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 17h5l-5 5v-5zM8.5 14.5A2.5 2.5 0 018 12V7a4 4 0 118 0v5a2.5 2.5 0 01-.5 2.5L12 17l-3.5-2.5z"
-                          />
-                        </svg>
-                        Reminder set
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {hourEvents.length === 0 && (
-                  <div className="text-gray-400 dark:text-gray-600 text-sm italic p-2">
-                    Click to add event
                   </div>
                 )}
+
+                {/* Render events that start in this hour */}
+                {eventLayouts
+                  .filter((layout) => Math.floor(layout.startHour) === hour)
+                  .map((layout) => {
+                    const startMinute = (layout.startHour % 1) * 80; // 80px per hour
+                    const heightInPixels = layout.duration * 80;
+                    const topOffset = startMinute;
+
+                    return (
+                      <div
+                        key={layout.event.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(layout.event);
+                        }}
+                        className={`
+                          absolute rounded-lg cursor-pointer hover:opacity-80 transition-all shadow-sm border border-white/20 overflow-hidden
+                          ${getEventColor(layout.event.eventType)} text-white
+                        `}
+                        style={{
+                          left: `${layout.left}%`, // Percentage of this flex-1 container
+                          width: `${layout.width}%`, // Width as percentage of this container
+                          top: `${topOffset}px`,
+                          height: `${Math.max(40, heightInPixels)}px`, // Minimum 40px height
+                          zIndex: layout.isMultiDay ? 20 : 10, // Multi-day events on top
+                        }}
+                      >
+                        <div className="p-3 h-full flex flex-col">
+                          {/* Event Title */}
+                          <div className="font-semibold text-sm leading-tight">
+                            {layout.event.task?.taskName ||
+                              layout.event.eventType}
+                          </div>
+
+                          {/* Time Display */}
+                          {layout.duration >= 0.75 && (
+                            <div className="text-xs opacity-90 mt-1">
+                              {format(
+                                parseISO(layout.event.startTime),
+                                "h:mm a"
+                              )}{" "}
+                              -{" "}
+                              {format(parseISO(layout.event.endTime), "h:mm a")}
+                            </div>
+                          )}
+
+                          {/* Multi-day indicator */}
+                          {layout.isMultiDay && (
+                            <div className="text-xs opacity-75 mt-1 flex items-center">
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                                />
+                              </svg>
+                              {layout.totalDays} day event
+                            </div>
+                          )}
+
+                          {/* Event type badge for longer events */}
+                          {layout.duration >= 1.5 && (
+                            <div className="text-xs opacity-75 mt-auto">
+                              <span className="bg-white/20 px-2 py-1 rounded-full capitalize">
+                                {layout.event.eventType}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Alarm indicator */}
+                          {layout.event.alarm && layout.duration >= 1 && (
+                            <div className="text-xs opacity-75 mt-1 flex items-center">
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 17h5l-5 5v-5zM8.5 14.5A2.5 2.5 0 018 12V7a4 4 0 118 0v5a2.5 2.5 0 01-.5 2.5L12 17l-3.5-2.5z"
+                                />
+                              </svg>
+                              Reminder set
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           );
@@ -800,7 +1227,6 @@ const DayView: React.FC<DayViewProps> = ({
     </div>
   );
 };
-
 // =============================================================================
 // 🗓️ MAIN CALENDAR COMPONENT
 // =============================================================================
