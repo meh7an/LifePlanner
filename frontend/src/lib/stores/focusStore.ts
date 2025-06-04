@@ -76,16 +76,15 @@ export const useFocusStore = create<FocusState>()(
                     const response = await apiClient.getActiveFocusSession();
                     console.log('Active session response:', response);
 
-                    // FIXED: Handle the response structure properly
-                    const activeSession = response || response;
+                    const activeSession = response || null;
 
                     set((state) => {
-                        state.activeSession = activeSession ?? null;
+                        state.activeSession = activeSession;
                         if (activeSession) {
                             state.isRunning = true;
                             state.currentDuration = activeSession.currentDurationMinutes
                                 ? activeSession.currentDurationMinutes * 60
-                                : activeSession.currentDuration || 0;
+                                : 0;
 
                             // Start timer if session is active
                             if (!state.timerInterval) {
@@ -134,16 +133,15 @@ export const useFocusStore = create<FocusState>()(
             startSession: async (data) => {
                 set((state) => { state.startLoading = true; state.error = null; });
                 try {
-                    console.log('Starting session with data:', data); // Debug log
+                    console.log('Starting session with data:', data);
                     const response = await apiClient.startFocusSession(data);
-                    console.log('Start session response:', response); // Debug log
+                    console.log('Start session response:', response);
 
                     if (response) {
-                        // FIXED: Handle the response structure properly
-                        const session = response || response;
+                        const session = response;
 
                         set((state) => {
-                            state.activeSession = session ?? null;
+                            state.activeSession = session;
                             state.isRunning = true;
                             state.currentDuration = 0;
                             state.startLoading = false;
@@ -155,18 +153,15 @@ export const useFocusStore = create<FocusState>()(
                             }, 1000);
                         });
 
-                        // FIXED: Show duration in toast message
                         const duration = data?.durationMinutes || 25;
                         toast.success(`Focus session started! 🎯 Stay focused for ${duration} minutes!`);
-
-                        // Refresh data after starting
                         get().fetchTodaySummary();
                         return true;
                     }
                     return false;
                 } catch (error) {
                     const apiError = error as ApiError;
-                    console.error('Start session error:', apiError); // Debug log
+                    console.error('Start session error:', apiError);
                     set((state) => {
                         state.startLoading = false;
                         state.error = apiError.message;
@@ -195,19 +190,17 @@ export const useFocusStore = create<FocusState>()(
                         state.currentDuration = 0;
                         state.endLoading = false;
 
-                        // FIXED: Handle the response structure properly
-                        const session = response || response;
+                        const session = response;
                         if (session) {
                             state.sessions.unshift(session);
                         }
                     });
 
+                    const minutes = Math.floor(get().currentDuration / 60);
                     const message = completed
-                        ? `Focus session completed! Great job! 🎉 You focused for ${Math.floor(get().currentDuration / 60)} minutes!`
+                        ? `Focus session completed! Great job! 🎉 You focused for ${minutes} minutes!`
                         : 'Focus session ended. ⏸️';
                     toast.success(message);
-
-                    // Refresh data after ending
                     get().fetchStats();
                     get().fetchTodaySummary();
 

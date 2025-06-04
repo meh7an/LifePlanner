@@ -294,13 +294,13 @@ const GlobalSearchSystem = () => {
         ]);
 
         const newResults = {
-          tasks: tasksResponse.data?.tasks || [],
+          tasks: tasksResponse.tasks || [],
           boards: boardsResponse.data?.boards || [],
           events: eventsResponse.data?.events || [],
-          notes: notesResponse.data?.notes || [],
-          posts: postsResponse.data?.posts || [],
-          memories: memoriesResponse.data?.memories || [],
-          archives: archivesResponse.data?.archives || [],
+          notes: notesResponse.notes || [],
+          posts: postsResponse.posts || [],
+          memories: memoriesResponse.memories || [],
+          archives: archivesResponse.archives || [],
           totalCount: 0,
         };
 

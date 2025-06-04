@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Play, Pause, Square, Clock, Target, Calendar } from "lucide-react";
 
 type FocusSession = {
@@ -45,7 +45,7 @@ export default function FocusPanel() {
   };
 
   // Stop + save session
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     if (!activeSession) return;
     const now = new Date();
     const completedSession = {
@@ -57,7 +57,7 @@ export default function FocusPanel() {
     setActiveSession(null);
     setRemainingSeconds(0);
     setIsPaused(false);
-  };
+  }, [activeSession]);
 
   // Countdown logic
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function FocusPanel() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeSession, remainingSeconds, isPaused]);
+  }, [activeSession, remainingSeconds, isPaused, handleStop]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60)

@@ -118,7 +118,7 @@ const FileUploadSystem: React.FC<FileUploadProps> = ({
     async (file: File): Promise<UploadedFile> => {
       if (taskId) {
         const response = await apiClient.uploadTaskAttachments(taskId, [file]);
-        return response.data?.files?.[0] || ({} as UploadedFile);
+        return response.files?.[0] || ({} as UploadedFile);
       } else {
         const formData = new FormData();
         formData.append("files", file);

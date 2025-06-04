@@ -14,7 +14,7 @@ import {
 import { useFocusStore } from "@/lib/stores/focusStore";
 import { useTaskStore } from "@/lib/stores/taskStore";
 import { useUIStore } from "@/lib/stores/uiStore";
-import { format, parseISO, differenceInMinutes } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 // =============================================================================
 // 🎯 FOCUS UTILITIES
@@ -200,20 +200,23 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { addNotification } = useUIStore();
 
-  // FIXED: Use the actual session duration instead of hardcoded 25 minutes
+  // FIXED: Use the actual session duration
   const sessionDurationMinutes = session.durationMinutes || 25;
   const totalDurationSeconds = sessionDurationMinutes * 60;
 
   const startTime = parseISO(session.startTime);
-  const elapsedMinutes =
-    session.currentDuration || differenceInMinutes(new Date(), startTime);
-  const elapsedSeconds = elapsedMinutes * 60;
 
   useEffect(() => {
-    // FIXED: Calculate remaining time based on actual session duration
+    // FIXED: Calculate elapsed time in SECONDS, not minutes
+    const now = new Date();
+    const elapsedSeconds = Math.floor(
+      (now.getTime() - startTime.getTime()) / 1000
+    );
     const remaining = Math.max(0, totalDurationSeconds - elapsedSeconds);
+
     setTimeRemaining(remaining);
 
+    // FIXED: Start the timer interval immediately if not paused
     if (!isPaused && remaining > 0) {
       intervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
@@ -233,7 +236,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
           }
           return prev - 1;
         });
-      }, 1000);
+      }, 1000); // FIXED: Update every 1000ms (1 second)
     }
 
     return () => {
@@ -241,15 +244,20 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused, elapsedSeconds, onEnd, addNotification, totalDurationSeconds]);
+  }, [isPaused, totalDurationSeconds, startTime, onEnd, addNotification]);
 
   const handlePause = () => {
     setIsPaused(true);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     onPause();
   };
 
   const handleResume = () => {
     setIsPaused(false);
+    // Timer will restart in the next useEffect cycle
     onResume();
   };
 
@@ -260,8 +268,11 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
     onEnd(completed);
   };
 
+  // FIXED: More accurate progress calculation
   const progressPercentage =
-    ((totalDurationSeconds - timeRemaining) / totalDurationSeconds) * 100;
+    totalDurationSeconds > 0
+      ? ((totalDurationSeconds - timeRemaining) / totalDurationSeconds) * 100
+      : 0;
 
   return (
     <div
@@ -284,7 +295,7 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
           </div>
         </div>
 
-        {/* Circular Timer */}
+        {/* FIXED: Circular Timer with real-time updates */}
         <div className="flex justify-center mb-8">
           <CircularTimer
             timeRemaining={timeRemaining}
@@ -300,12 +311,6 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
         <div className="mb-8">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Progress: {Math.round(progressPercentage)}% complete
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-1000"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
           </div>
         </div>
 

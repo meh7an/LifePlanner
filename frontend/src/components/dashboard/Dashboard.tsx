@@ -136,7 +136,7 @@ const StatsCards: React.FC = () => {
 };
 
 // =============================================================================
-// 📋 TODAY'S TASKS COMPONENT
+// 📋 UPDATED TODAY'S TASKS COMPONENT - Fixed stats refresh
 // =============================================================================
 
 interface TodaysTasksProps {
@@ -145,22 +145,26 @@ interface TodaysTasksProps {
 
 const TodaysTasks: React.FC<TodaysTasksProps> = ({ onOpenTaskModal }) => {
   const { todayTasks, toggleTaskComplete, fetchTodayTasks } = useTaskStore();
+  // 🔥 ADD THIS - Import fetchStats to refresh dashboard stats
+  const { fetchStats } = useDashboardStore();
 
   const dueTasks = todayTasks?.dueTasks || [];
   const newTasks = todayTasks?.newTasks || [];
   const overdueTasks = todayTasks?.overdueTasks || [];
-  const completedTodayCount = todayTasks?.completedToday || 0; // This is a number
+  const completedTodayCount = todayTasks?.completedToday || 0;
   const totalTasks = todayTasks?.summary?.totalDue || 0;
 
   // Combine due tasks and new tasks for display
   const allTasks = [...overdueTasks, ...dueTasks, ...newTasks];
 
-  // Handle task completion toggle with UI refresh
+  // 🔥 UPDATED - Handle task completion toggle with dashboard stats refresh
   const handleToggleComplete = async (taskId: string) => {
     const success = await toggleTaskComplete(taskId);
     if (success) {
       // Refresh today's tasks to update the UI
       await fetchTodayTasks();
+      // 🔥 ADD THIS LINE - Refresh dashboard stats to update the completed count
+      await fetchStats();
     }
   };
 
@@ -676,7 +680,16 @@ const QuickActions: React.FC<QuickActionsProps> = ({
   onOpenEventModal,
   onOpenBoardModal,
 }) => {
-  const { startSession } = useFocusStore();
+  const { startSession, startLoading } = useFocusStore();
+  const { fetchStats } = useDashboardStore();
+
+  const handleStartFocusSession = async () => {
+    const success = await startSession({ durationMinutes: 25 });
+    if (success) {
+      // FIXED: Refresh dashboard stats when focus session starts
+      await fetchStats();
+    }
+  };
 
   const actions = [
     {
@@ -687,11 +700,12 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       action: onOpenTaskModal,
     },
     {
-      title: "Start Focus",
+      title: startLoading ? "Starting..." : "Start Focus",
       description: "Begin a focus session",
       icon: Zap,
       color: "orange",
-      action: () => startSession(),
+      action: handleStartFocusSession,
+      disabled: startLoading,
     },
     {
       title: "Add Event",
@@ -722,8 +736,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
             <button
               key={index}
               onClick={action.action}
+              disabled={action.disabled}
               className={`p-4 rounded-lg border-2 border-dashed transition-all hover:border-solid hover:shadow-md ${
-                action.color === "green"
+                action.disabled
+                  ? "opacity-50 cursor-not-allowed"
+                  : action.color === "green"
                   ? "border-green-300 dark:border-green-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
                   : action.color === "orange"
                   ? "border-orange-300 dark:border-orange-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"

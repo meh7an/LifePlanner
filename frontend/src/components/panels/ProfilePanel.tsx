@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  User,
   Camera,
   Settings,
   BarChart3,
@@ -10,6 +9,7 @@ import {
   Clock,
   Award,
 } from "lucide-react";
+import Image from "next/image";
 
 // summy data
 const mockUser = {
@@ -62,10 +62,12 @@ export default function ProfilePanel() {
         <div className="relative inline-block">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
             {user.profilePicture ? (
-              <img
+              <Image
                 src={user.profilePicture}
                 alt="Profile"
-                className="w-full h-full rounded-full object-cover"
+                width={80}
+                height={80}
+                className="rounded-full object-cover"
               />
             ) : (
               user.fullName
