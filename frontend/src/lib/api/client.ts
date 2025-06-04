@@ -376,13 +376,13 @@ class ApiClient {
     // =============================================================================
 
     async getCalendars(): Promise<{ calendars: Calendar[]; count: number }> {
-        const response = await this.client.get<{ calendars: Calendar[]; count: number }>('/calendars');
+        const response = await this.client.get<{ message: string, calendars: Calendar[]; count: number }>('/calendars');
         return response.data;
     }
 
     async getCalendar(id: string): Promise<Calendar> {
-        const response = await this.client.get<Calendar>(`/calendars/${id}`);
-        return response.data;
+        const response = await this.client.get<{ message: string, calendar: Calendar }>(`/calendars/${id}`);
+        return response.data.calendar;
     }
 
     async createCalendar(data: CreateCalendarRequest): Promise<Calendar> {
@@ -434,6 +434,8 @@ class ApiClient {
 
     async createEvent(data: CreateEventRequest): Promise<CalendarEvent> {
         const response = await this.client.post<{ message: string, event: CalendarEvent }>('/calendars/events', data);
+        console.log('Event created:', response.data);
+
         return response.data.event;
     }
 
@@ -460,8 +462,8 @@ class ApiClient {
     }
 
     async getActiveFocusSession(): Promise<FocusSession | null> {
-        const response = await this.client.get<FocusSession | null>('/focus/active');
-        return response.data;
+        const response = await this.client.get<{ message: string, session: FocusSession | null }>('/focus/active');
+        return response.data.session;
     }
 
     async getFocusStats(period?: string): Promise<FocusStats> {
@@ -472,18 +474,18 @@ class ApiClient {
     }
 
     async getFocusToday(): Promise<FocusTodaySummary> {
-        const response = await this.client.get<FocusTodaySummary>('/focus/today');
-        return response.data;
+        const response = await this.client.get<{ message: string, todaySummary: FocusTodaySummary }>('/focus/today');
+        return response.data.todaySummary;
     }
 
     async startFocusSession(data?: StartFocusRequest): Promise<FocusSession> {
-        const response = await this.client.post<FocusSession>('/focus/start', data || {});
-        return response.data;
+        const response = await this.client.post<{ message: string, session: FocusSession }>('/focus/start', data || {});
+        return response.data.session;
     }
 
     async endFocusSession(id: string, data?: EndFocusRequest): Promise<FocusSession> {
-        const response = await this.client.put<FocusSession>(`/focus/${id}/end`, data || {});
-        return response.data;
+        const response = await this.client.put<{ message: string, session: FocusSession }>(`/focus/${id}/end`, data || {});
+        return response.data.session;
     }
 
     async deleteFocusSession(id: string): Promise<ApiResponse<void>> {

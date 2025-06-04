@@ -59,7 +59,7 @@ export const useCalendarStore = create<CalendarState>()(
                 try {
                     const response = await apiClient.getCalendars();
                     set((state) => {
-                        state.calendars = response.data?.calendars || [];
+                        state.calendars = response.calendars || [];
                         state.calendarsLoading = false;
                     });
                 } catch (error) {
@@ -76,7 +76,7 @@ export const useCalendarStore = create<CalendarState>()(
                 try {
                     const response = await apiClient.getAllEvents(params);
                     set((state) => {
-                        state.events = response.data?.events || [];
+                        state.events = response.events || [];
                         state.eventsLoading = false;
                     });
                 } catch (error) {

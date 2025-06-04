@@ -30,7 +30,6 @@ import {
   setHours,
   setMinutes,
   parseISO,
-  formatISO,
 } from "date-fns";
 
 // =============================================================================
@@ -96,10 +95,12 @@ const EventModal: React.FC<EventModalProps> = ({
   const { addNotification } = useUIStore();
 
   const [formData, setFormData] = useState<CreateEventRequest>({
-    startTime: selectedDate ? formatISO(selectedDate) : formatISO(new Date()),
+    startTime: selectedDate
+      ? selectedDate.toISOString()
+      : new Date().toISOString(),
     endTime: selectedDate
-      ? formatISO(addDays(selectedDate, 0))
-      : formatISO(new Date()),
+      ? addDays(selectedDate, 0).toISOString()
+      : new Date().toISOString(),
     eventType: "meeting",
     calendarId: calendarId || calendars[0]?.id || "",
     alarm: false,
@@ -125,8 +126,8 @@ const EventModal: React.FC<EventModalProps> = ({
       const endTime = setHours(setMinutes(selectedDate, 0), 10);
       setFormData((prev) => ({
         ...prev,
-        startTime: formatISO(startTime),
-        endTime: formatISO(endTime),
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
       }));
     }
   }, [event, selectedDate]);
@@ -297,7 +298,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    startTime: formatISO(new Date(e.target.value)),
+                    startTime: new Date(e.target.value).toISOString(),
                   }))
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
@@ -314,7 +315,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    endTime: formatISO(new Date(e.target.value)),
+                    endTime: new Date(e.target.value).toISOString(),
                   }))
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"

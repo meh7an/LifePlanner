@@ -201,6 +201,8 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
   const { addNotification } = useUIStore();
 
   const defaultDuration = 25 * 60; // 25 minutes in seconds
+  console.log("session", session);
+
   const startTime = parseISO(session.startTime);
   const elapsedMinutes =
     session.currentDuration || differenceInMinutes(new Date(), startTime);

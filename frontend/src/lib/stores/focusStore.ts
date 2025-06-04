@@ -74,6 +74,8 @@ export const useFocusStore = create<FocusState>()(
             fetchActiveSession: async () => {
                 try {
                     const response = await apiClient.getActiveFocusSession();
+                    console.log('Active session response:', response);
+
                     const activeSession = response;
 
                     set((state) => {
