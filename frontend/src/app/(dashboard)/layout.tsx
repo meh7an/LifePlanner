@@ -145,51 +145,6 @@ export default function DashboardLayout({
                 ))}
               </ul>
             </nav>
-
-            {/* User Profile */}
-            <div className="p-4 border-t border-green-100 dark:border-green-800/30">
-              {sidebarOpen ? (
-                <div className="flex items-center space-x-3">
-                  {user?.profilePicture ? (
-                    <Image
-                      src={user.profilePicture}
-                      alt="Profile"
-                      width={40}
-                      height={40}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-white font-semibold">
-                      {user?.username?.charAt(0).toUpperCase() || "U"}
-                    </span>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 dark:text-white truncate">
-                      {user?.username || "User"}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Premium Plan
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto">
-                  {user?.profilePicture ? (
-                    <Image
-                      src={user.profilePicture}
-                      alt="Profile"
-                      width={40}
-                      height={40}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-white font-semibold">
-                      {user?.username?.charAt(0).toUpperCase() || "U"}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
           </aside>
 
           {/* Main Content Area */}
