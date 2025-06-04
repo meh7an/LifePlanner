@@ -5,7 +5,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import {
     ApiResponse,
-    PaginatedResponse,
     ApiError,
     AuthResponse,
     LoginRequest,
@@ -68,7 +67,17 @@ import {
     UploadedFile,
     QueryParams,
     ViewTemplate,
-    PaginatedTasks
+    PaginatedTasks,
+    PaginatedFocusSessions,
+    PaginatedCalendarEvents,
+    PaginatedNotes,
+    PaginatedShares,
+    PaginatedNotifications,
+    PaginatedPosts,
+    PaginatedMemories,
+    PaginatedArchives,
+    PaginatedRepeats,
+    PaginatedViews
 } from '@/lib/types';
 
 // =============================================================================
@@ -318,13 +327,13 @@ class ApiClient {
         return response.data;
     }
 
-    async getTodayTasks(): Promise<ApiResponse<TodayTasksOverview>> {
-        const response = await this.client.get<ApiResponse<TodayTasksOverview>>('/tasks/today');
+    async getTodayTasks(): Promise<TodayTasksOverview> {
+        const response = await this.client.get<TodayTasksOverview>('/tasks/today');
         return response.data;
     }
 
-    async getTask(id: string): Promise<ApiResponse<Task>> {
-        const response = await this.client.get<ApiResponse<Task>>(`/tasks/${id}`);
+    async getTask(id: string): Promise<Task> {
+        const response = await this.client.get<Task>(`/tasks/${id}`);
         return response.data;
     }
 
@@ -347,13 +356,13 @@ class ApiClient {
     // 📋 TASK STEPS ENDPOINTS
     // =============================================================================
 
-    async createTaskStep(taskId: string, data: CreateTaskStepRequest): Promise<ApiResponse<TaskStep>> {
-        const response = await this.client.post<ApiResponse<TaskStep>>(`/tasks/${taskId}/steps`, data);
+    async createTaskStep(taskId: string, data: CreateTaskStepRequest): Promise<TaskStep> {
+        const response = await this.client.post<TaskStep>(`/tasks/${taskId}/steps`, data);
         return response.data;
     }
 
-    async updateTaskStep(id: string, data: UpdateTaskStepRequest): Promise<ApiResponse<TaskStep>> {
-        const response = await this.client.put<ApiResponse<TaskStep>>(`/tasks/steps/${id}`, data);
+    async updateTaskStep(id: string, data: UpdateTaskStepRequest): Promise<TaskStep> {
+        const response = await this.client.put<TaskStep>(`/tasks/steps/${id}`, data);
         return response.data;
     }
 
@@ -366,13 +375,13 @@ class ApiClient {
     // 📅 CALENDAR ENDPOINTS
     // =============================================================================
 
-    async getCalendars(): Promise<ApiResponse<{ calendars: Calendar[]; count: number }>> {
-        const response = await this.client.get<ApiResponse<{ calendars: Calendar[]; count: number }>>('/calendars');
+    async getCalendars(): Promise<{ calendars: Calendar[]; count: number }> {
+        const response = await this.client.get<{ calendars: Calendar[]; count: number }>('/calendars');
         return response.data;
     }
 
-    async getCalendar(id: string): Promise<ApiResponse<Calendar>> {
-        const response = await this.client.get<ApiResponse<Calendar>>(`/calendars/${id}`);
+    async getCalendar(id: string): Promise<Calendar> {
+        const response = await this.client.get<Calendar>(`/calendars/${id}`);
         return response.data;
     }
 
@@ -381,8 +390,8 @@ class ApiClient {
         return response.data.calendar;
     }
 
-    async updateCalendar(id: string, data: UpdateCalendarRequest): Promise<ApiResponse<Calendar>> {
-        const response = await this.client.put<ApiResponse<Calendar>>(`/calendars/${id}`, data);
+    async updateCalendar(id: string, data: UpdateCalendarRequest): Promise<Calendar> {
+        const response = await this.client.put<Calendar>(`/calendars/${id}`, data);
         return response.data;
     }
 
@@ -395,16 +404,16 @@ class ApiClient {
     // 📅 CALENDAR EVENT ENDPOINTS
     // =============================================================================
 
-    async getAllEvents(params?: CalendarFilters & QueryParams): Promise<PaginatedResponse<{ events: CalendarEvent[] }>> {
+    async getAllEvents(params?: CalendarFilters & QueryParams): Promise<PaginatedCalendarEvents> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ events: CalendarEvent[] }>>(
+        const response = await this.client.get<PaginatedCalendarEvents>(
             `/calendars/events/all${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getUpcomingEvents(days = 7): Promise<ApiResponse<{ events: CalendarEvent[]; summary: unknown }>> {
-        const response = await this.client.get<ApiResponse<{ events: CalendarEvent[]; summary: unknown }>>(
+    async getUpcomingEvents(days = 7): Promise<{ events: CalendarEvent[]; summary: unknown }> {
+        const response = await this.client.get<{ events: CalendarEvent[]; summary: unknown }>(
             `/calendars/events/upcoming?days=${days}`
         );
         return response.data;
@@ -442,38 +451,38 @@ class ApiClient {
     // ⚡ FOCUS SESSION ENDPOINTS
     // =============================================================================
 
-    async getFocusSessions(params?: QueryParams): Promise<PaginatedResponse<{ sessions: FocusSession[] }>> {
+    async getFocusSessions(params?: QueryParams): Promise<PaginatedFocusSessions> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ sessions: FocusSession[] }>>(
+        const response = await this.client.get<PaginatedFocusSessions>(
             `/focus${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getActiveFocusSession(): Promise<ApiResponse<FocusSession | null>> {
-        const response = await this.client.get<ApiResponse<FocusSession | null>>('/focus/active');
+    async getActiveFocusSession(): Promise<FocusSession | null> {
+        const response = await this.client.get<FocusSession | null>('/focus/active');
         return response.data;
     }
 
-    async getFocusStats(period?: string): Promise<ApiResponse<FocusStats>> {
-        const response = await this.client.get<ApiResponse<FocusStats>>(
+    async getFocusStats(period?: string): Promise<FocusStats> {
+        const response = await this.client.get<FocusStats>(
             `/focus/stats${period ? `?period=${period}` : ''}`
         );
         return response.data;
     }
 
-    async getFocusToday(): Promise<ApiResponse<FocusTodaySummary>> {
-        const response = await this.client.get<ApiResponse<FocusTodaySummary>>('/focus/today');
+    async getFocusToday(): Promise<FocusTodaySummary> {
+        const response = await this.client.get<FocusTodaySummary>('/focus/today');
         return response.data;
     }
 
-    async startFocusSession(data?: StartFocusRequest): Promise<ApiResponse<FocusSession>> {
-        const response = await this.client.post<ApiResponse<FocusSession>>('/focus/start', data || {});
+    async startFocusSession(data?: StartFocusRequest): Promise<FocusSession> {
+        const response = await this.client.post<FocusSession>('/focus/start', data || {});
         return response.data;
     }
 
-    async endFocusSession(id: string, data?: EndFocusRequest): Promise<ApiResponse<FocusSession>> {
-        const response = await this.client.put<ApiResponse<FocusSession>>(`/focus/${id}/end`, data || {});
+    async endFocusSession(id: string, data?: EndFocusRequest): Promise<FocusSession> {
+        const response = await this.client.put<FocusSession>(`/focus/${id}/end`, data || {});
         return response.data;
     }
 
@@ -486,29 +495,29 @@ class ApiClient {
     // 📝 NOTES ENDPOINTS
     // =============================================================================
 
-    async getNotes(params?: NoteFilters & QueryParams): Promise<PaginatedResponse<{ notes: Note[] }>> {
+    async getNotes(params?: NoteFilters & QueryParams): Promise<PaginatedNotes> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ notes: Note[] }>>(
+        const response = await this.client.get<PaginatedNotes>(
             `/notes${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getTaskNotes(taskId: string, params?: QueryParams): Promise<PaginatedResponse<{ notes: Note[] }>> {
+    async getTaskNotes(taskId: string, params?: QueryParams): Promise<PaginatedNotes> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ notes: Note[] }>>(
+        const response = await this.client.get<PaginatedNotes>(
             `/notes/task/${taskId}${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async createTaskNote(taskId: string, data: CreateNoteRequest): Promise<ApiResponse<Note>> {
-        const response = await this.client.post<ApiResponse<Note>>(`/notes/task/${taskId}`, data);
+    async createTaskNote(taskId: string, data: CreateNoteRequest): Promise<Note> {
+        const response = await this.client.post<Note>(`/notes/task/${taskId}`, data);
         return response.data;
     }
 
-    async updateNote(id: string, data: UpdateNoteRequest): Promise<ApiResponse<Note>> {
-        const response = await this.client.put<ApiResponse<Note>>(`/notes/${id}`, data);
+    async updateNote(id: string, data: UpdateNoteRequest): Promise<Note> {
+        const response = await this.client.put<Note>(`/notes/${id}`, data);
         return response.data;
     }
 
@@ -521,18 +530,18 @@ class ApiClient {
     // 📊 DASHBOARD ENDPOINTS
     // =============================================================================
 
-    async getDashboardOverview(): Promise<ApiResponse<{ stats: DashboardStats }>> {
-        const response = await this.client.get<ApiResponse<{ stats: DashboardStats }>>('/dashboard/overview');
+    async getDashboardOverview(): Promise<{ stats: DashboardStats }> {
+        const response = await this.client.get<{ stats: DashboardStats }>('/dashboard/overview');
         return response.data;
     }
 
-    async getDashboardToday(): Promise<ApiResponse<DashboardOverview>> {
-        const response = await this.client.get<ApiResponse<DashboardOverview>>('/dashboard/today');
+    async getDashboardToday(): Promise<DashboardOverview> {
+        const response = await this.client.get<DashboardOverview>('/dashboard/today');
         return response.data;
     }
 
-    async getProductivityInsights(period?: string): Promise<ApiResponse<ProductivityInsights>> {
-        const response = await this.client.get<ApiResponse<ProductivityInsights>>(
+    async getProductivityInsights(period?: string): Promise<ProductivityInsights> {
+        const response = await this.client.get<ProductivityInsights>(
             `/dashboard/insights${period ? `?period=${period}` : ''}`
         );
         return response.data;
@@ -542,29 +551,29 @@ class ApiClient {
     // 🤝 SHARING ENDPOINTS
     // =============================================================================
 
-    async createShare(data: CreateShareRequest): Promise<ApiResponse<Share>> {
-        const response = await this.client.post<ApiResponse<Share>>('/share', data);
+    async createShare(data: CreateShareRequest): Promise<Share> {
+        const response = await this.client.post<Share>('/share', data);
         return response.data;
     }
 
-    async getSharedByMe(params?: QueryParams): Promise<PaginatedResponse<{ shares: Share[] }>> {
+    async getSharedByMe(params?: QueryParams): Promise<PaginatedShares> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ shares: Share[] }>>(
+        const response = await this.client.get<PaginatedShares>(
             `/share/by-me${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getSharedWithMe(params?: QueryParams): Promise<PaginatedResponse<{ shares: Share[] }>> {
+    async getSharedWithMe(params?: QueryParams): Promise<PaginatedShares> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ shares: Share[] }>>(
+        const response = await this.client.get<PaginatedShares>(
             `/share/with-me${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async updateSharePermissions(id: string, data: UpdateShareRequest): Promise<ApiResponse<Share>> {
-        const response = await this.client.put<ApiResponse<Share>>(`/share/${id}/permissions`, data);
+    async updateSharePermissions(id: string, data: UpdateShareRequest): Promise<Share> {
+        const response = await this.client.put<Share>(`/share/${id}/permissions`, data);
         return response.data;
     }
 
@@ -577,21 +586,21 @@ class ApiClient {
     // 🔔 NOTIFICATION ENDPOINTS
     // =============================================================================
 
-    async getNotifications(params?: QueryParams): Promise<PaginatedResponse<{ notifications: Notification[] }>> {
+    async getNotifications(params?: QueryParams): Promise<PaginatedNotifications> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ notifications: Notification[] }>>(
+        const response = await this.client.get<PaginatedNotifications>(
             `/notifications${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async markNotificationAsRead(id: string): Promise<ApiResponse<Notification>> {
-        const response = await this.client.put<ApiResponse<Notification>>(`/notifications/${id}/read`);
+    async markNotificationAsRead(id: string): Promise<Notification> {
+        const response = await this.client.put<Notification>(`/notifications/${id}/read`);
         return response.data;
     }
 
-    async markAllNotificationsAsRead(): Promise<ApiResponse<{ count: number }>> {
-        const response = await this.client.put<ApiResponse<{ count: number }>>('/notifications/read-all');
+    async markAllNotificationsAsRead(): Promise<{ count: number }> {
+        const response = await this.client.put<{ count: number }>('/notifications/read-all');
         return response.data;
     }
 
@@ -612,26 +621,26 @@ class ApiClient {
         hasArchive?: boolean;
         startDate?: string;
         endDate?: string;
-    } & QueryParams): Promise<PaginatedResponse<{ posts: Post[] }>> {
+    } & QueryParams): Promise<PaginatedPosts> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ posts: Post[] }>>(
+        const response = await this.client.get<PaginatedPosts>(
             `/posts${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getPost(id: string): Promise<ApiResponse<Post>> {
-        const response = await this.client.get<ApiResponse<Post>>(`/posts/${id}`);
+    async getPost(id: string): Promise<Post> {
+        const response = await this.client.get<Post>(`/posts/${id}`);
         return response.data;
     }
 
-    async createPost(data: CreatePostRequest): Promise<ApiResponse<Post>> {
-        const response = await this.client.post<ApiResponse<Post>>('/posts', data);
+    async createPost(data: CreatePostRequest): Promise<Post> {
+        const response = await this.client.post<Post>('/posts', data);
         return response.data;
     }
 
-    async updatePost(id: string, data: UpdatePostRequest): Promise<ApiResponse<Post>> {
-        const response = await this.client.put<ApiResponse<Post>>(`/posts/${id}`, data);
+    async updatePost(id: string, data: UpdatePostRequest): Promise<Post> {
+        const response = await this.client.put<Post>(`/posts/${id}`, data);
         return response.data;
     }
 
@@ -646,21 +655,21 @@ class ApiClient {
         tags?: string;
         category?: string;
         limit?: number;
-    }): Promise<ApiResponse<{ query: string; posts: Post[]; count: number }>> {
+    }): Promise<{ query: string; posts: Post[]; count: number }> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<ApiResponse<{ query: string; posts: Post[]; count: number }>>(
+        const response = await this.client.get<{ query: string; posts: Post[]; count: number }>(
             `/posts/search?${queryString}`
         );
         return response.data;
     }
 
-    async convertPostToMemory(id: string, data?: CreateMemoryRequest): Promise<ApiResponse<Memory>> {
-        const response = await this.client.post<ApiResponse<Memory>>(`/posts/${id}/memory`, data || {});
+    async convertPostToMemory(id: string, data?: CreateMemoryRequest): Promise<Memory> {
+        const response = await this.client.post<Memory>(`/posts/${id}/memory`, data || {});
         return response.data;
     }
 
-    async archivePost(id: string, data?: CreateArchiveRequest): Promise<ApiResponse<Archive>> {
-        const response = await this.client.post<ApiResponse<Archive>>(`/posts/${id}/archive`, data || {});
+    async archivePost(id: string, data?: CreateArchiveRequest): Promise<Archive> {
+        const response = await this.client.post<Archive>(`/posts/${id}/archive`, data || {});
         return response.data;
     }
 
@@ -673,16 +682,16 @@ class ApiClient {
         search?: string;
         startDate?: string;
         endDate?: string;
-    } & QueryParams): Promise<PaginatedResponse<{ memories: Memory[] }>> {
+    } & QueryParams): Promise<PaginatedMemories> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ memories: Memory[] }>>(
+        const response = await this.client.get<PaginatedMemories>(
             `/memories${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getMemoryTags(): Promise<ApiResponse<{ tags: Array<{ tag: string; count: number }>; totalUniqueTags: number; totalTaggedMemories: number }>> {
-        const response = await this.client.get<ApiResponse<{ tags: Array<{ tag: string; count: number }>; totalUniqueTags: number; totalTaggedMemories: number }>>('/memories/tags');
+    async getMemoryTags(): Promise<{ tags: Array<{ tag: string; count: number }>; totalUniqueTags: number; totalTaggedMemories: number }> {
+        const response = await this.client.get<{ tags: Array<{ tag: string; count: number }>; totalUniqueTags: number; totalTaggedMemories: number }>('/memories/tags');
         return response.data;
     }
 
@@ -690,28 +699,28 @@ class ApiClient {
         q?: string;
         tags?: string;
         limit?: number;
-    }): Promise<ApiResponse<{ query: string; tags: string; memories: Memory[]; count: number }>> {
+    }): Promise<{ query: string; tags: string; memories: Memory[]; count: number }> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<ApiResponse<{ query: string; tags: string; memories: Memory[]; count: number }>>(
+        const response = await this.client.get<{ query: string; tags: string; memories: Memory[]; count: number }>(
             `/memories/search?${queryString}`
         );
         return response.data;
     }
 
-    async getMemoriesByTag(tag: string, limit = 20): Promise<ApiResponse<{ tag: string; memories: Memory[]; count: number }>> {
-        const response = await this.client.get<ApiResponse<{ tag: string; memories: Memory[]; count: number }>>(
+    async getMemoriesByTag(tag: string, limit = 20): Promise<{ tag: string; memories: Memory[]; count: number }> {
+        const response = await this.client.get<{ tag: string; memories: Memory[]; count: number }>(
             `/memories/tag/${encodeURIComponent(tag)}?limit=${limit}`
         );
         return response.data;
     }
 
-    async getMemory(id: string): Promise<ApiResponse<Memory>> {
-        const response = await this.client.get<ApiResponse<Memory>>(`/memories/${id}`);
+    async getMemory(id: string): Promise<Memory> {
+        const response = await this.client.get<Memory>(`/memories/${id}`);
         return response.data;
     }
 
-    async updateMemory(id: string, data: { tags: string[] }): Promise<ApiResponse<Memory>> {
-        const response = await this.client.put<ApiResponse<Memory>>(`/memories/${id}`, data);
+    async updateMemory(id: string, data: { tags: string[] }): Promise<Memory> {
+        const response = await this.client.put<Memory>(`/memories/${id}`, data);
         return response.data;
     }
 
@@ -729,16 +738,16 @@ class ApiClient {
         search?: string;
         startDate?: string;
         endDate?: string;
-    } & QueryParams): Promise<PaginatedResponse<{ archives: Archive[] }>> {
+    } & QueryParams): Promise<PaginatedArchives> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ archives: Archive[] }>>(
+        const response = await this.client.get<PaginatedArchives>(
             `/archives${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getArchiveCategories(): Promise<ApiResponse<{ categories: Array<{ category: string; count: number }>; totalCategories: number; totalArchivedPosts: number }>> {
-        const response = await this.client.get<ApiResponse<{ categories: Array<{ category: string; count: number }>; totalCategories: number; totalArchivedPosts: number }>>('/archives/categories');
+    async getArchiveCategories(): Promise<{ categories: Array<{ category: string; count: number }>; totalCategories: number; totalArchivedPosts: number }> {
+        const response = await this.client.get<{ categories: Array<{ category: string; count: number }>; totalCategories: number; totalArchivedPosts: number }>('/archives/categories');
         return response.data;
     }
 
@@ -746,28 +755,28 @@ class ApiClient {
         q?: string;
         category?: string;
         limit?: number;
-    }): Promise<ApiResponse<{ query: string; category: string; archives: Archive[]; count: number }>> {
+    }): Promise<{ query: string; category: string; archives: Archive[]; count: number }> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<ApiResponse<{ query: string; category: string; archives: Archive[]; count: number }>>(
+        const response = await this.client.get<{ query: string; category: string; archives: Archive[]; count: number }>(
             `/archives/search?${queryString}`
         );
         return response.data;
     }
 
-    async getArchivesByCategory(category: string, limit = 20): Promise<ApiResponse<{ category: string; archives: Archive[]; count: number }>> {
-        const response = await this.client.get<ApiResponse<{ category: string; archives: Archive[]; count: number }>>(
+    async getArchivesByCategory(category: string, limit = 20): Promise<{ category: string; archives: Archive[]; count: number }> {
+        const response = await this.client.get<{ category: string; archives: Archive[]; count: number }>(
             `/archives/category/${encodeURIComponent(category)}?limit=${limit}`
         );
         return response.data;
     }
 
-    async getArchive(id: string): Promise<ApiResponse<Archive>> {
-        const response = await this.client.get<ApiResponse<Archive>>(`/archives/${id}`);
+    async getArchive(id: string): Promise<Archive> {
+        const response = await this.client.get<Archive>(`/archives/${id}`);
         return response.data;
     }
 
-    async updateArchive(id: string, data: { category: string }): Promise<ApiResponse<Archive>> {
-        const response = await this.client.put<ApiResponse<Archive>>(`/archives/${id}`, data);
+    async updateArchive(id: string, data: { category: string }): Promise<Archive> {
+        const response = await this.client.put<Archive>(`/archives/${id}`, data);
         return response.data;
     }
 
@@ -776,8 +785,8 @@ class ApiClient {
         return response.data;
     }
 
-    async bulkMoveArchives(data: { sourceCategory: string; targetCategory: string }): Promise<ApiResponse<{ updatedCount: number }>> {
-        const response = await this.client.put<ApiResponse<{ updatedCount: number }>>('/archives/bulk/move-category', data);
+    async bulkMoveArchives(data: { sourceCategory: string; targetCategory: string }): Promise<{ updatedCount: number }> {
+        const response = await this.client.put<{ updatedCount: number }>('/archives/bulk/move-category', data);
         return response.data;
     }
 
@@ -788,16 +797,16 @@ class ApiClient {
     async getRepeats(params?: {
         periodType?: Repeat['periodType'];
         active?: boolean;
-    } & QueryParams): Promise<PaginatedResponse<{ repeats: Repeat[] }>> {
+    } & QueryParams): Promise<PaginatedRepeats> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ repeats: Repeat[] }>>(
+        const response = await this.client.get<PaginatedRepeats>(
             `/repeats${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getRepeatStats(): Promise<ApiResponse<{ stats: unknown }>> {
-        const response = await this.client.get<ApiResponse<{ stats: unknown }>>('/repeats/stats');
+    async getRepeatStats(): Promise<{ stats: unknown }> {
+        const response = await this.client.get<{ stats: unknown }>('/repeats/stats');
         return response.data;
     }
 
@@ -805,36 +814,36 @@ class ApiClient {
         taskId?: string;
         days?: number;
         limit?: number;
-    }): Promise<ApiResponse<{ occurrences: unknown[]; summary: unknown }>> {
+    }): Promise<{ occurrences: unknown[]; summary: unknown }> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<ApiResponse<{ occurrences: unknown[]; summary: unknown }>>(
+        const response = await this.client.get<{ occurrences: unknown[]; summary: unknown }>(
             `/repeats/upcoming${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async processRepeats(): Promise<ApiResponse<{ summary: unknown }>> {
-        const response = await this.client.post<ApiResponse<{ summary: unknown }>>('/repeats/process');
+    async processRepeats(): Promise<{ summary: unknown }> {
+        const response = await this.client.post<{ summary: unknown }>('/repeats/process');
         return response.data;
     }
 
-    async getTaskRepeat(taskId: string): Promise<ApiResponse<Repeat>> {
-        const response = await this.client.get<ApiResponse<Repeat>>(`/repeats/task/${taskId}`);
+    async getTaskRepeat(taskId: string): Promise<Repeat> {
+        const response = await this.client.get<Repeat>(`/repeats/task/${taskId}`);
         return response.data;
     }
 
-    async getRepeat(id: string): Promise<ApiResponse<Repeat>> {
-        const response = await this.client.get<ApiResponse<Repeat>>(`/repeats/${id}`);
+    async getRepeat(id: string): Promise<Repeat> {
+        const response = await this.client.get<Repeat>(`/repeats/${id}`);
         return response.data;
     }
 
-    async createTaskRepeat(taskId: string, data: CreateRepeatRequest): Promise<ApiResponse<Repeat>> {
-        const response = await this.client.post<ApiResponse<Repeat>>(`/repeats/task/${taskId}`, data);
+    async createTaskRepeat(taskId: string, data: CreateRepeatRequest): Promise<Repeat> {
+        const response = await this.client.post<Repeat>(`/repeats/task/${taskId}`, data);
         return response.data;
     }
 
-    async updateRepeat(id: string, data: UpdateRepeatRequest): Promise<ApiResponse<Repeat>> {
-        const response = await this.client.put<ApiResponse<Repeat>>(`/repeats/${id}`, data);
+    async updateRepeat(id: string, data: UpdateRepeatRequest): Promise<Repeat> {
+        const response = await this.client.put<Repeat>(`/repeats/${id}`, data);
         return response.data;
     }
 
@@ -850,21 +859,21 @@ class ApiClient {
     async getViews(params?: {
         viewType?: View['viewType'];
         defaultOnly?: boolean;
-    } & QueryParams): Promise<PaginatedResponse<{ views: View[] }>> {
+    } & QueryParams): Promise<PaginatedViews> {
         const queryString = new URLSearchParams(params as Record<string, string>).toString();
-        const response = await this.client.get<PaginatedResponse<{ views: View[] }>>(
+        const response = await this.client.get<PaginatedViews>(
             `/views${queryString ? `?${queryString}` : ''}`
         );
         return response.data;
     }
 
-    async getViewStats(): Promise<ApiResponse<{ stats: unknown }>> {
-        const response = await this.client.get<ApiResponse<{ stats: unknown }>>('/views/stats');
+    async getViewStats(): Promise<{ stats: unknown }> {
+        const response = await this.client.get<{ stats: unknown }>('/views/stats');
         return response.data;
     }
 
-    async getViewTemplates(): Promise<ApiResponse<{ templates: ViewTemplate[]; count: number }>> {
-        const response = await this.client.get<ApiResponse<{ templates: ViewTemplate[]; count: number }>>('/views/templates');
+    async getViewTemplates(): Promise<{ templates: ViewTemplate[]; count: number }> {
+        const response = await this.client.get<{ templates: ViewTemplate[]; count: number }>('/views/templates');
         return response.data;
     }
 
@@ -872,38 +881,38 @@ class ApiClient {
         templateId: string;
         name?: string;
         setAsDefault?: boolean;
-    }): Promise<ApiResponse<View>> {
-        const response = await this.client.post<ApiResponse<View>>('/views/apply-template', data);
+    }): Promise<View> {
+        const response = await this.client.post<View>('/views/apply-template', data);
         return response.data;
     }
 
-    async getView(id: string): Promise<ApiResponse<View>> {
-        const response = await this.client.get<ApiResponse<View>>(`/views/${id}`);
+    async getView(id: string): Promise<View> {
+        const response = await this.client.get<View>(`/views/${id}`);
         return response.data;
     }
 
-    async createView(data: CreateViewRequest): Promise<ApiResponse<View>> {
-        const response = await this.client.post<ApiResponse<View>>('/views', data);
+    async createView(data: CreateViewRequest): Promise<View> {
+        const response = await this.client.post<View>('/views', data);
         return response.data;
     }
 
-    async updateView(id: string, data: UpdateViewRequest): Promise<ApiResponse<View>> {
-        const response = await this.client.put<ApiResponse<View>>(`/views/${id}`, data);
+    async updateView(id: string, data: UpdateViewRequest): Promise<View> {
+        const response = await this.client.put<View>(`/views/${id}`, data);
         return response.data;
     }
 
-    async deleteView(id: string): Promise<ApiResponse<void>> {
-        const response = await this.client.delete<ApiResponse<void>>(`/views/${id}`);
+    async deleteView(id: string): Promise<void> {
+        const response = await this.client.delete<void>(`/views/${id}`);
         return response.data;
     }
 
-    async setViewAsDefault(id: string): Promise<ApiResponse<View>> {
-        const response = await this.client.put<ApiResponse<View>>(`/views/${id}/default`);
+    async setViewAsDefault(id: string): Promise<View> {
+        const response = await this.client.put<View>(`/views/${id}/default`);
         return response.data;
     }
 
-    async duplicateView(id: string, data?: { name?: string }): Promise<ApiResponse<View>> {
-        const response = await this.client.post<ApiResponse<View>>(`/views/${id}/duplicate`, data || {});
+    async duplicateView(id: string, data?: { name?: string }): Promise<View> {
+        const response = await this.client.post<View>(`/views/${id}/duplicate`, data || {});
         return response.data;
     }
 
@@ -911,11 +920,11 @@ class ApiClient {
     // 📁 FILE UPLOAD ENDPOINTS
     // =============================================================================
 
-    async uploadAvatar(file: File): Promise<ApiResponse<{ user: User; file: UploadedFile }>> {
+    async uploadAvatar(file: File): Promise<{ user: User; file: UploadedFile }> {
         const formData = new FormData();
         formData.append('avatar', file);
 
-        const response = await this.client.post<ApiResponse<{ user: User; file: UploadedFile }>>(
+        const response = await this.client.post<{ user: User; file: UploadedFile }>(
             '/upload/avatar',
             formData,
             {
@@ -927,13 +936,13 @@ class ApiClient {
         return response.data;
     }
 
-    async uploadTaskAttachments(taskId: string, files: File[]): Promise<ApiResponse<{ files: UploadedFile[]; task: Task }>> {
+    async uploadTaskAttachments(taskId: string, files: File[]): Promise<{ files: UploadedFile[]; task: Task }> {
         const formData = new FormData();
         files.forEach((file) => {
             formData.append('attachments', file);
         });
 
-        const response = await this.client.post<ApiResponse<{ files: UploadedFile[]; task: Task }>>(
+        const response = await this.client.post<{ files: UploadedFile[]; task: Task }>(
             `/upload/task/${taskId}/attachments`,
             formData,
             {

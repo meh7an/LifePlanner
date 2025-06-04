@@ -76,7 +76,7 @@ export const useTaskStore = create<TaskState>()(
                 try {
                     const response = await apiClient.getTodayTasks();
                     set((state) => {
-                        state.todayTasks = response.data || null;
+                        state.todayTasks = response || null;
                     });
                 } catch (error) {
                     console.warn('Failed to fetch today tasks:', error);
@@ -87,7 +87,7 @@ export const useTaskStore = create<TaskState>()(
                 try {
                     const response = await apiClient.getTask(id);
                     set((state) => {
-                        state.selectedTask = response.data || null;
+                        state.selectedTask = response || null;
                     });
                 } catch (error) {
                     const apiError = error as ApiError;

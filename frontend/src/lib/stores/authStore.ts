@@ -310,11 +310,11 @@ export const useAuthStore = create<AuthState>()(
                     try {
                         const response = await apiClient.uploadAvatar(file);
 
-                        if (response.data?.user) {
+                        if (response.user) {
                             set((state) => {
                                 // Update user avatar while preserving other data
-                                if (state.user && response.data?.user) {
-                                    state.user.profilePicture = response.data.user.profilePicture;
+                                if (state.user && response.user) {
+                                    state.user.profilePicture = response.user.profilePicture;
                                 }
                                 state.profileLoading = false;
                             });

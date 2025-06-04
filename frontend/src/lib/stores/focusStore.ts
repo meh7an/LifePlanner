@@ -59,7 +59,7 @@ export const useFocusStore = create<FocusState>()(
                 try {
                     const response = await apiClient.getFocusSessions();
                     set((state) => {
-                        state.sessions = response.data?.sessions || [];
+                        state.sessions = response.sessions || [];
                         state.loading = false;
                     });
                 } catch (error) {
@@ -74,7 +74,7 @@ export const useFocusStore = create<FocusState>()(
             fetchActiveSession: async () => {
                 try {
                     const response = await apiClient.getActiveFocusSession();
-                    const activeSession = response.data;
+                    const activeSession = response;
 
                     set((state) => {
                         state.activeSession = activeSession ?? null;
@@ -106,7 +106,7 @@ export const useFocusStore = create<FocusState>()(
                 try {
                     const response = await apiClient.getFocusStats(period);
                     set((state) => {
-                        state.stats = response.data || null;
+                        state.stats = response || null;
                     });
                 } catch (error) {
                     console.warn('Failed to fetch focus stats:', error);
@@ -117,7 +117,7 @@ export const useFocusStore = create<FocusState>()(
                 try {
                     const response = await apiClient.getFocusToday();
                     set((state) => {
-                        state.todaySummary = response.data || null;
+                        state.todaySummary = response || null;
                     });
                 } catch (error) {
                     console.warn('Failed to fetch today summary:', error);
@@ -128,9 +128,9 @@ export const useFocusStore = create<FocusState>()(
                 set((state) => { state.startLoading = true; state.error = null; });
                 try {
                     const response = await apiClient.startFocusSession(data);
-                    if (response.data) {
+                    if (response) {
                         set((state) => {
-                            state.activeSession = response.data ?? null;
+                            state.activeSession = response ?? null;
                             state.isRunning = true;
                             state.currentDuration = 0;
                             state.startLoading = false;
@@ -177,8 +177,8 @@ export const useFocusStore = create<FocusState>()(
                         state.endLoading = false;
 
                         // Add completed session to list
-                        if (response.data) {
-                            state.sessions.unshift(response.data);
+                        if (response) {
+                            state.sessions.unshift(response);
                         }
                     });
 
