@@ -479,10 +479,10 @@ const GlobalSearchSystem = () => {
       {/* Search Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+        className="flex items-center space-x-2 px-2 lg:px-4 py-2 bg-transparent dark:bg-transparent lg:bg-white lg:dark:bg-bg-gray-800 border border-transparent dark:border-transparent lg:border-gray-300 lg:dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-none lg:shadow-sm rounded-full lg:rounded-lg"
       >
         <svg
-          className="w-4 h-4 text-gray-500"
+          className="w-6 h-6 text-gray-500 lg:w-4 lg:h-4"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -494,7 +494,7 @@ const GlobalSearchSystem = () => {
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
-        <span className="text-gray-500 dark:text-gray-400">
+        <span className="text-gray-500 dark:text-gray-400 hidden lg:inline-block">
           Search everything...
         </span>
         <div className="hidden sm:flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
