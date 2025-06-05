@@ -6,12 +6,11 @@ import { immer } from 'zustand/middleware/immer';
 interface UIState {
     // Layout
     sidebarOpen: boolean;
+    isMobile: boolean;
     rightPanelOpen: boolean;
     rightPanelContent: string | null;
-
     // Theme
     theme: 'light' | 'dark' | 'system';
-
     // Modals
     modals: {
         taskModal: boolean;
@@ -20,16 +19,14 @@ interface UIState {
         profileModal: boolean;
         settingsModal: boolean;
     };
-
     // Notifications
     notifications: Notification[];
-
     // Loading overlay
     globalLoading: boolean;
     globalLoadingText: string;
-
     // Actions
     toggleSidebar: () => void;
+    setMobile: (isMobile: boolean) => void;
     openRightPanel: (content: string) => void;
     closeRightPanel: () => void;
     setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -46,7 +43,8 @@ export const useUIStore = create<UIState>()(
     devtools(
         immer((set) => ({
             // Initial state
-            sidebarOpen: true,
+            sidebarOpen: true, // Will be adjusted based on screen size
+            isMobile: false,
             rightPanelOpen: false,
             rightPanelContent: null,
             theme: 'system',
@@ -61,7 +59,23 @@ export const useUIStore = create<UIState>()(
             globalLoading: false,
             globalLoadingText: '',
 
-            toggleSidebar: () => set((state) => { state.sidebarOpen = !state.sidebarOpen; }),
+            toggleSidebar: () => set((state) => {
+                state.sidebarOpen = !state.sidebarOpen;
+            }),
+
+            setMobile: (isMobile) => set((state) => {
+                const wasDesktop = !state.isMobile;
+                state.isMobile = isMobile;
+
+                // Auto-adjust sidebar based on screen size
+                if (isMobile && wasDesktop) {
+                    // Switching from desktop to mobile - close sidebar
+                    state.sidebarOpen = false;
+                } else if (!isMobile && !wasDesktop) {
+                    // Switching from mobile to desktop - open sidebar
+                    state.sidebarOpen = true;
+                }
+            }),
 
             openRightPanel: (content) => set((state) => {
                 state.rightPanelOpen = true;
@@ -73,10 +87,18 @@ export const useUIStore = create<UIState>()(
                 state.rightPanelContent = null;
             }),
 
-            setTheme: (theme) => set((state) => { state.theme = theme; }),
+            setTheme: (theme) => set((state) => {
+                state.theme = theme;
+            }),
 
-            openModal: (modal) => set((state) => { state.modals[modal] = true; }),
-            closeModal: (modal) => set((state) => { state.modals[modal] = false; }),
+            openModal: (modal) => set((state) => {
+                state.modals[modal] = true;
+            }),
+
+            closeModal: (modal) => set((state) => {
+                state.modals[modal] = false;
+            }),
+
             closeAllModals: () => set((state) => {
                 Object.keys(state.modals).forEach(key => {
                     state.modals[key as keyof UIState['modals']] = false;
@@ -95,7 +117,9 @@ export const useUIStore = create<UIState>()(
                 state.notifications = state.notifications.filter((n: Notification) => n.id !== id);
             }),
 
-            clearNotifications: () => set((state) => { state.notifications = []; }),
+            clearNotifications: () => set((state) => {
+                state.notifications = [];
+            }),
 
             setGlobalLoading: (loading, text = '') => set((state) => {
                 state.globalLoading = loading;

@@ -16,13 +16,14 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const {
     sidebarOpen,
+    isMobile,
     toggleSidebar,
+    setMobile,
     rightPanelOpen,
     rightPanelContent,
     closeRightPanel,
   } = useUIStore();
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -37,13 +38,15 @@ export default function DashboardLayout({
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
+      setMobile(mobile);
     };
 
+    // Set initial state
     handleResize();
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [setMobile]);
 
   const navigationItems = [
     {
@@ -98,10 +101,10 @@ export default function DashboardLayout({
         }`}
       >
         <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900/20 dark:to-emerald-900/20 h-screen flex w-full relative">
-          {/* Mobile Overlay */}
+          {/* Mobile Overlay - Now with blur and transparency */}
           {isMobile && sidebarOpen && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
               onClick={toggleSidebar}
             />
           )}
@@ -121,7 +124,7 @@ export default function DashboardLayout({
             `}
           >
             {/* Logo */}
-            <div className="p-4 border-b border-green-100 dark:border-green-800/30">
+            <div className="p-4 border-b border-green-100 dark:border-green-800/30 md:hidden">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -270,16 +273,16 @@ export default function DashboardLayout({
             </header>
 
             {/* Page Content - Reduced padding on mobile */}
-            <main className="flex-1 overflow-auto p-0 md:p-6">{children}</main>
+            <main className="flex-1 overflow-auto p-0">{children}</main>
           </div>
 
           {/* Right Panel */}
           {rightPanelOpen && rightPanelContent && (
             <>
-              {/* Mobile overlay for right panel */}
+              {/* Mobile overlay for right panel - Also with blur and transparency */}
               {isMobile && (
                 <div
-                  className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+                  className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
                   onClick={closeRightPanel}
                 />
               )}

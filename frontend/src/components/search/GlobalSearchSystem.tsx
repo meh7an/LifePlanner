@@ -513,8 +513,7 @@ const GlobalSearchSystem = () => {
             {/* Modal panel */}
             <div
               ref={searchContainerRef}
-              className="relative align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-green-100 dark:border-green-800/30"
-              style={{ margin: "2rem auto" }}
+              className="fixed align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-green-100 dark:border-green-800/30 left-0 right-0 mx-auto"
             >
               {/* Search Input */}
               <div className="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
