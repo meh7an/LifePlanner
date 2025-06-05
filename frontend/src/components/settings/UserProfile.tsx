@@ -314,7 +314,7 @@ const UserProfilePage = () => {
 
                     {/* Avatar Section */}
                     <div className="flex items-center space-x-6 mb-8">
-                      <div className="relative">
+                      <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-green-200 dark:border-green-700">
                         {avatarPreview ? (
                           <Image
                             src={avatarPreview}
@@ -861,37 +861,6 @@ const UserProfilePage = () => {
                           </svg>
                           <span>Export Data</span>
                         </button>
-                      </div>
-
-                      {/* Subscription Info */}
-                      <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                          <span className="text-xl mr-2">💎</span>
-                          Subscription
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-gray-900 dark:text-white font-medium">
-                              Premium Plan
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm">
-                              Full access to all features
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-green-600 dark:text-green-400 font-bold">
-                              Active
-                            </p>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                              Renews Jan 15, 2026
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
-                          <button className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium text-sm">
-                            Manage Subscription
-                          </button>
-                        </div>
                       </div>
 
                       {/* Danger Zone */}

@@ -623,7 +623,7 @@ const AdvancedAnalyticsDashboard = () => {
               </div>
             </div>
 
-            {/* Tab Navigation - Fixed for mobile scrolling */}
+            {/* Tab Navigation */}
             <div className="mt-6 border-b border-green-100 dark:border-green-800/30 overflow-x-auto">
               <nav className="flex space-x-8 min-w-max">
                 {tabs.map((tab) => (

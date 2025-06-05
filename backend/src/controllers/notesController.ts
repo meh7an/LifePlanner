@@ -2,12 +2,9 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import {
     AuthenticatedRequest,
-    NoteWithTask,
     NotesStats,
     TaskPriority,
-    WhereClause,
-    PaginatedResponse,
-    ApiResponse
+    WhereClause
 } from '../types';
 
 // Get all notes for a task

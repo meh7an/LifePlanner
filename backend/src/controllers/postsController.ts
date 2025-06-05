@@ -3,8 +3,6 @@ import { prisma } from '../app';
 import {
     AuthenticatedRequest,
     PrivacySetting,
-    ApiResponse,
-    PaginatedResponse,
     WhereClause
 } from '../types';
 

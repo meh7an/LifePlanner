@@ -34,11 +34,14 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10000, // limit each IP to 100 requests per windowMs
+    max: 10000, // limit each IP to 10000 requests per windowMs
     message: {
         error: 'Too many requests from this IP, please try again later.'
     }
 });
+
+// Static file serving for uploads
+app.use('/api/uploads', express.static('uploads'));
 
 app.use('/api/', limiter);
 
@@ -51,9 +54,6 @@ app.use(compression());
 
 // Logging middleware
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-
-// Static file serving for uploads
-app.use('/uploads', express.static('uploads'));
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -118,7 +118,7 @@ app.get('/', (req, res) => {
             views: '/api/views',
             posts: '/api/posts',
             archives: '/api/archives',
-            memories: '/api/memories'
+            memories: '/api/memories',
         },
         docs: '/api/docs',
         health: '/health'

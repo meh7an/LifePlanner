@@ -109,7 +109,6 @@ export const useFocusStore = create<FocusState>()(
             fetchStats: async (period) => {
                 try {
                     const response = await apiClient.getFocusStats(period);
-                    // FIXED: Handle the response structure properly
                     set((state) => {
                         state.stats = response || response || null;
                     });
@@ -121,7 +120,6 @@ export const useFocusStore = create<FocusState>()(
             fetchTodaySummary: async () => {
                 try {
                     const response = await apiClient.getFocusToday();
-                    // FIXED: Handle the response structure properly
                     set((state) => {
                         state.todaySummary = response || response || null;
                     });

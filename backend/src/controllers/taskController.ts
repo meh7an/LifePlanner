@@ -2,14 +2,9 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import {
     AuthenticatedRequest,
-    TaskWithDetails,
-    TaskFilters,
     TaskPriority,
     TaskStatus,
-    PaginatedResponse,
-    ApiResponse,
-    WhereClause,
-    OrderByClause
+    WhereClause
 } from '../types';
 import { celebrateTaskCompletion } from './notificationsController';
 

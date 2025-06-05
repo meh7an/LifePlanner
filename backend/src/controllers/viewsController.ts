@@ -2,8 +2,6 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import {
     AuthenticatedRequest,
-    ApiResponse,
-    PaginatedResponse,
     WhereClause
 } from '../types';
 

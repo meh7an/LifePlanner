@@ -57,6 +57,7 @@ export const UserProfileDropdown: React.FC = () => {
               width={40}
               height={40}
               className="w-10 h-10 rounded-full object-cover border-2 border-green-200 dark:border-green-700"
+              unoptimized
             />
           ) : (
             <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
@@ -93,6 +94,7 @@ export const UserProfileDropdown: React.FC = () => {
                     width={48}
                     height={48}
                     className="w-12 h-12 rounded-full object-cover"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
@@ -114,9 +116,6 @@ export const UserProfileDropdown: React.FC = () => {
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                   {user?.email}
-                </div>
-                <div className="text-xs text-green-600 dark:text-green-400">
-                  Premium Plan
                 </div>
               </div>
             </div>

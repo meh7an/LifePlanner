@@ -200,14 +200,12 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { addNotification } = useUIStore();
 
-  // FIXED: Use the actual session duration
   const sessionDurationMinutes = session.durationMinutes || 25;
   const totalDurationSeconds = sessionDurationMinutes * 60;
 
   const startTime = parseISO(session.startTime);
 
   useEffect(() => {
-    // FIXED: Calculate elapsed time in SECONDS, not minutes
     const now = new Date();
     const elapsedSeconds = Math.floor(
       (now.getTime() - startTime.getTime()) / 1000
@@ -216,7 +214,6 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
 
     setTimeRemaining(remaining);
 
-    // FIXED: Start the timer interval immediately if not paused
     if (!isPaused && remaining > 0) {
       intervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
@@ -268,7 +265,6 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
     onEnd(completed);
   };
 
-  // FIXED: More accurate progress calculation
   const progressPercentage =
     totalDurationSeconds > 0
       ? ((totalDurationSeconds - timeRemaining) / totalDurationSeconds) * 100
@@ -295,7 +291,6 @@ const ActiveFocusSession: React.FC<ActiveFocusSessionProps> = ({
           </div>
         </div>
 
-        {/* FIXED: Circular Timer with real-time updates */}
         <div className="flex justify-center mb-8">
           <CircularTimer
             timeRemaining={timeRemaining}
@@ -441,7 +436,6 @@ const FocusSessionStarter: React.FC<FocusSessionStarterProps> = ({
   ];
 
   const handleStart = () => {
-    // FIXED: Pass the duration to the start function
     onStart({
       taskId: selectedTaskId,
       durationMinutes: duration,
@@ -907,7 +901,7 @@ const FocusInterface: React.FC<FocusInterfaceProps> = ({ className = "" }) => {
         <FocusStatsComponent stats={stats} todaySummary={todaySummary} />
       )}
 
-      {/* Quick Actions (FIXED: Pass duration to quick start buttons) */}
+      {/* Quick Actions */}
       {!activeSession && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-100 dark:border-green-800/30 p-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">

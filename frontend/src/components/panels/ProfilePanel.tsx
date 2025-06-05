@@ -68,6 +68,7 @@ export default function ProfilePanel() {
                 width={80}
                 height={80}
                 className="rounded-full object-cover"
+                unoptimized
               />
             ) : (
               user.fullName

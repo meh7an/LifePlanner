@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
 import { prisma } from '../app';
-import { AuthenticatedRequest, ApiResponse } from '../types';
+import { AuthenticatedRequest } from '../types';
 
 const unlinkAsync = promisify(fs.unlink);
 
@@ -130,7 +130,7 @@ export const uploadAvatar = async (req: AuthenticatedRequest, res: Response): Pr
         }
 
         // Generate URL for the uploaded file
-        const fileUrl = `/uploads/avatars/${req.file.filename}`;
+        const fileUrl = `/api/uploads/avatars/${req.file.filename}`;
 
         // Update user profile with new avatar
         const updatedUser = await prisma.user.update({

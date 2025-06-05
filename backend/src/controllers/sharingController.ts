@@ -2,11 +2,8 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import {
     AuthenticatedRequest,
-    Share,
     ShareResourceType,
     PermissionLevel,
-    ApiResponse,
-    PaginatedResponse
 } from '../types';
 import { notifyShareReceived } from './notificationsController';
 

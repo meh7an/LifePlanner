@@ -465,7 +465,6 @@ export const useAuthStore = create<AuthState>()(
                     token: state.token,
                     refreshToken: state.refreshToken,
                 }),
-                // FIXED: Synchronous rehydration handling
                 onRehydrateStorage: () => (state) => {
                     console.log('🔄 Auth store rehydrated');
                     if (state) {

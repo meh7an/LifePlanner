@@ -779,7 +779,7 @@ const WeekView: React.FC<WeekViewProps> = ({
           <div
             key={hour}
             className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700 relative"
-            style={{ height: "60px" }} // Fixed height for precise positioning
+            style={{ height: "60px" }}
           >
             {/* Time Label */}
             <div className="p-2 text-right text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 min-w-0 flex items-start">

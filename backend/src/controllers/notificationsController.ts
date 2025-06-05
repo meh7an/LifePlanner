@@ -1,10 +1,6 @@
 import { Response } from 'express';
 import { prisma } from '../app';
-import {
-    AuthenticatedRequest,
-    ApiResponse,
-    PaginatedResponse
-} from '../types';
+import { AuthenticatedRequest } from '../types';
 
 // Notification types and interfaces
 export interface Notification {

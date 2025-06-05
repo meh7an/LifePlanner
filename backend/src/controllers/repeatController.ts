@@ -3,8 +3,6 @@ import { prisma } from '../app';
 import {
     AuthenticatedRequest,
     RepeatPeriod,
-    ApiResponse,
-    PaginatedResponse,
     WhereClause
 } from '../types';
 import { repeatScheduler } from '../services/repeatScheduler';

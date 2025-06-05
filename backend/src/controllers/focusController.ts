@@ -2,14 +2,8 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import {
     AuthenticatedRequest,
-    FocusSessionWithTask,
-    FocusStats,
-    FocusSummary,
     FocusPeriod,
-    FocusFilters,
-    WhereClause,
-    PaginatedResponse,
-    ApiResponse
+    WhereClause
 } from '../types';
 import { celebrateFocusSession, celebrateStreakMilestone } from './notificationsController';
 
@@ -180,7 +174,6 @@ export const getFocusSession = async (req: AuthenticatedRequest, res: Response):
 export const startFocusSession = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
-        // FIXED: Extract durationMinutes from request body
         const { taskId, durationMinutes = 25 } = req.body;
 
         if (!userId) {
@@ -267,7 +260,6 @@ export const startFocusSession = async (req: AuthenticatedRequest, res: Response
             }
         }
 
-        // FIXED: Include durationMinutes in the session creation
         const session = await prisma.focusSession.create({
             data: {
                 startTime: new Date(),

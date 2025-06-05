@@ -1190,7 +1190,7 @@ interface BoardsGridProps {
   onSelectBoard: (board: Board) => void;
   onCreateBoard: () => void;
   onEditBoard: (board: Board) => void;
-  onDeleteBoard: (boardId: string, boardName: string) => void; // Fixed signature
+  onDeleteBoard: (boardId: string, boardName: string) => void;
   className?: string;
 }
 
@@ -1284,7 +1284,7 @@ const BoardsGrid: React.FC<BoardsGridProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteBoard(board.id, board.name); // Fixed: now passes both boardId and boardName
+                      onDeleteBoard(board.id, board.name);
                     }}
                     className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
                     title="Delete board"

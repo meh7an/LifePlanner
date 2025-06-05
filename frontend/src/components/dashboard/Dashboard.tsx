@@ -157,7 +157,6 @@ const QuickActions: React.FC<QuickActionsProps> = ({
   const handleStartFocusSession = async () => {
     const success = await startSession({ durationMinutes: 25 });
     if (success) {
-      // FIXED: Refresh dashboard stats when focus session starts
       await fetchStats();
     }
   };
@@ -665,8 +664,6 @@ const ActiveFocusSession: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
-
-  // FIXED: Use the actual session duration like in focus page
   const sessionDurationMinutes = activeSession?.durationMinutes || 25;
   const totalDurationSeconds = sessionDurationMinutes * 60;
 
@@ -679,8 +676,6 @@ const ActiveFocusSession: React.FC = () => {
     }
 
     const startTime = parseISO(activeSession.startTime);
-
-    // FIXED: Calculate elapsed time in SECONDS, not minutes
     const now = new Date();
     const elapsedSeconds = Math.floor(
       (now.getTime() - startTime.getTime()) / 1000
@@ -688,8 +683,6 @@ const ActiveFocusSession: React.FC = () => {
     const remaining = Math.max(0, totalDurationSeconds - elapsedSeconds);
 
     setTimeRemaining(remaining);
-
-    // FIXED: Start the timer interval immediately if not paused
     if (!isPaused && remaining > 0) {
       intervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
@@ -700,7 +693,7 @@ const ActiveFocusSession: React.FC = () => {
           }
           return prev - 1;
         });
-      }, 1000); // FIXED: Update every 1000ms (1 second)
+      }, 1000);
     }
 
     return () => {
@@ -784,7 +777,7 @@ const ActiveFocusSession: React.FC = () => {
           Focus Session Active
         </h2>
 
-        {/* Timer Display - FIXED with real countdown */}
+        {/* Timer Display */}
         <div className="mb-6">
           <div className="text-4xl font-bold text-orange-500 mb-2">
             {formatTime(timeRemaining)}
@@ -798,7 +791,7 @@ const ActiveFocusSession: React.FC = () => {
           </p>
         </div>
 
-        {/* Progress Ring - FIXED with real progress */}
+        {/* Progress Ring */}
         <div className="relative w-32 h-32 mx-auto mb-6">
           <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
             <circle
