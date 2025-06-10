@@ -2,6 +2,8 @@
 
 A comprehensive productivity application built with a robust PostgreSQL database architecture, featuring advanced task management, calendar integration, focus tracking, and real-time collaboration capabilities.
 
+<a href="https://lokical.com">Demo Website</a>
+
 ## 🗄️ Database Architecture
 
 ### Core Database Technologies
